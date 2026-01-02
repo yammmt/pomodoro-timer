@@ -31,7 +31,11 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- Code Quality: Confirm coding standards and review processes are defined
+- Testing Standards: Ensure test framework and coverage goals are established
+- User Experience Consistency: Verify UX guidelines and accessibility requirements are specified
+- Performance Requirements: Define performance benchmarks and monitoring approach
+- Simplicity: Assess if proposed solution avoids unnecessary complexity
 
 ## Project Structure
 
