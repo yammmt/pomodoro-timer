@@ -1,0 +1,32 @@
+# Rust
+target/
+debug/
+release/
+**/*.rs.bk
+*.pdb
+*.rlib
+*.prof*
+
+# Node.js (Tauri frontend tooling)
+node_modules/
+dist/
+build/
+*.log
+
+# Tauri
+src-tauri/target/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# Environment
+.env*
+!.env.example

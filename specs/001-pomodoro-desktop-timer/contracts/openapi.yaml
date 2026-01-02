@@ -1,0 +1,98 @@
+openapi: 3.0.3
+info:
+  title: Pomodoro Timer IPC
+  version: 1.0.0
+  description: REST-style contract for Tauri commands handling timer lifecycle.
+servers:
+  - url: tauri://localhost
+paths:
+  /timer/state:
+    get:
+      summary: Get current timer state
+      responses:
+        '200':
+          description: Current timer snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimerState'
+  /timer/start:
+    post:
+      summary: Start a 25-minute work session
+      responses:
+        '200':
+          description: Started work timer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimerState'
+        '409':
+          description: Timer already running
+  /timer/pause:
+    post:
+      summary: Pause the active timer
+      responses:
+        '200':
+          description: Paused timer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimerState'
+        '409':
+          description: No running timer to pause
+  /timer/resume:
+    post:
+      summary: Resume a paused timer
+      responses:
+        '200':
+          description: Resumed timer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimerState'
+        '409':
+          description: No paused timer to resume
+  /timer/clear:
+    post:
+      summary: Clear current timer and reset to ready work state
+      responses:
+        '200':
+          description: Cleared and reset to work-ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimerState'
+components:
+  schemas:
+    TimerState:
+      type: object
+      required: [phase, status, remaining_secs, duration_secs, completion_flag]
+      properties:
+        phase:
+          type: string
+          enum: [work, break]
+        status:
+          type: string
+          enum: [idle, running, paused, complete]
+        remaining_secs:
+          type: integer
+          minimum: 0
+          example: 1499
+        duration_secs:
+          type: integer
+          minimum: 0
+          example: 1500
+        completion_flag:
+          type: boolean
+          description: True only after break completion until cleared or restarted.
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        paused_at:
+          type: string
+          format: date-time
+          nullable: true
+        state_label:
+          type: string
+          description: Human-friendly label for UI (e.g., "Work", "Break", "Ready", "Complete").

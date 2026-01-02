@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        .container {
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        #timer-display {
+            font-size: 72px;
+            font-weight: 300;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+        #state-label {
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #888;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        #start-btn {
+            background: #10b981;
+            color: white;
+        }
+        #start-btn:hover:not(:disabled) {
+            background: #059669;
+        }
+        #pause-btn {
+            background: #f59e0b;
+            color: white;
+        }
+        #pause-btn:hover:not(:disabled) {
+            background: #d97706;
+        }
+        #resume-btn {
+            background: #3b82f6;
+            color: white;
+        }
+        #resume-btn:hover:not(:disabled) {
+            background: #2563eb;
+        }
+        #clear-btn {
+            background: #ef4444;
+            color: white;
+        }
+        #clear-btn:hover:not(:disabled) {
+            background: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="state-label" role="status" aria-live="polite">Ready</div>
+        <div id="timer-display" role="timer" aria-live="polite" aria-atomic="true">25:00</div>
+        <div class="controls">
+            <button id="start-btn" aria-label="Start 25-minute work timer">Start</button>
+            <button id="pause-btn" disabled aria-label="Pause timer">Pause</button>
+            <button id="resume-btn" disabled aria-label="Resume timer">Resume</button>
+            <button id="clear-btn" aria-label="Clear timer and reset">Clear</button>
+        </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+</body>
+</html>
