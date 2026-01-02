@@ -32,3 +32,18 @@ cargo test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECH
 - All code must follow styles described in `.editorconfig` file
 - Rust 1.92: Follow standard conventions
 
+## Commit Message Style
+
+All commit message should follow [the conventional commit style](https://www.conventionalcommits.org/en/v1.0.0/).
+
+The examples of types of the commits are the following:
+
+- `ci`
+- `chore`
+- `docs`
+- `feat`
+- `fix`
+- `perf`
+- `refactor`
+- `style`
+- `test`
