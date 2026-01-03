@@ -13,9 +13,10 @@ pub enum Phase {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum Status {
-    Idle,
+    WorkReady,
+    BreakReady,
     Running,
     Paused,
     Complete,
@@ -51,7 +52,7 @@ impl TimerService {
     pub fn new() -> Self {
         Self {
             phase: Phase::Work,
-            status: Status::Idle,
+            status: Status::WorkReady,
             remaining_secs: WORK_DURATION_SECS,
             duration_secs: WORK_DURATION_SECS,
             completion_flag: false,
@@ -95,19 +96,22 @@ impl TimerService {
         self.completion_flag = true;
         match self.phase {
             Phase::Work => {
-                // Transition to break
+                // Transition to break ready (don't auto-start)
                 self.phase = Phase::Break;
-                self.status = Status::Running;
+                self.status = Status::BreakReady;
                 self.duration_secs = BREAK_DURATION_SECS;
                 self.remaining_secs = BREAK_DURATION_SECS;
-                self.state_label = "Break time".to_string();
-                self.started_instant = Some(Instant::now());
+                self.state_label = "Break ready - press Start".to_string();
+                self.started_instant = None;
                 self.paused_remaining = None;
             }
             Phase::Break => {
-                // Mark complete
-                self.status = Status::Complete;
-                self.state_label = "Break complete".to_string();
+                // Transition to work ready (don't auto-start)
+                self.phase = Phase::Work;
+                self.status = Status::WorkReady;
+                self.duration_secs = WORK_DURATION_SECS;
+                self.remaining_secs = WORK_DURATION_SECS;
+                self.state_label = "Work ready - press Start".to_string();
                 self.started_instant = None;
                 self.paused_remaining = None;
             }
@@ -119,14 +123,37 @@ impl TimerService {
             return Err("Timer already running".to_string());
         }
 
-        self.phase = Phase::Work;
-        self.status = Status::Running;
-        self.duration_secs = WORK_DURATION_SECS;
-        self.remaining_secs = WORK_DURATION_SECS;
-        self.completion_flag = false;
-        self.state_label = "Working".to_string();
-        self.started_instant = Some(Instant::now());
-        self.paused_remaining = None;
+        // Phase-aware start: start work or break based on current status
+        match self.status {
+            Status::WorkReady | Status::Complete => {
+                // Start work session
+                self.phase = Phase::Work;
+                self.status = Status::Running;
+                self.duration_secs = WORK_DURATION_SECS;
+                self.remaining_secs = WORK_DURATION_SECS;
+                self.completion_flag = false;
+                self.state_label = "Working".to_string();
+                self.started_instant = Some(Instant::now());
+                self.paused_remaining = None;
+            }
+            Status::BreakReady => {
+                // Start break session
+                self.phase = Phase::Break;
+                self.status = Status::Running;
+                self.duration_secs = BREAK_DURATION_SECS;
+                self.remaining_secs = BREAK_DURATION_SECS;
+                self.completion_flag = false;
+                self.state_label = "Break time".to_string();
+                self.started_instant = Some(Instant::now());
+                self.paused_remaining = None;
+            }
+            Status::Running => {
+                return Err("Timer already running".to_string());
+            }
+            Status::Paused => {
+                return Err("Timer is paused, use resume instead".to_string());
+            }
+        }
 
         Ok(self.get_state())
     }
@@ -170,7 +197,7 @@ impl TimerService {
 
     pub fn clear(&mut self) -> Result<TimerState, String> {
         self.phase = Phase::Work;
-        self.status = Status::Idle;
+        self.status = Status::WorkReady;
         self.remaining_secs = WORK_DURATION_SECS;
         self.duration_secs = WORK_DURATION_SECS;
         self.completion_flag = false;

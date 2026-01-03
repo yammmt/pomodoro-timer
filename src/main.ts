@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 interface TimerState {
   phase: 'work' | 'break';
-  status: 'idle' | 'running' | 'paused' | 'complete';
+  status: 'workReady' | 'breakReady' | 'running' | 'paused' | 'complete';
   remainingSecs: number;
   durationSecs: number;
   completionFlag: boolean;
@@ -68,18 +68,14 @@ async function updateUI() {
     timerDisplay.textContent = formatTime(state.remainingSecs);
     stateLabel.textContent = state.stateLabel;
 
-    // Update button states
-    startBtn.disabled = state.status === 'running';
+    // Update button states - Start enabled when in Ready states
+    startBtn.disabled = !(state.status === 'workReady' || state.status === 'breakReady');
     pauseBtn.disabled = state.status !== 'running';
     resumeBtn.disabled = state.status !== 'paused';
     clearBtn.disabled = false;
 
     // Detect completion transitions and play chime
     if (state.completionFlag && !lastCompletionFlag) {
-      playCompletionChime();
-    }
-    // Also detect work->break transition (completion of work phase)
-    if (state.phase === 'break' && state.status === 'running' && state.remainingSecs === state.durationSecs) {
       playCompletionChime();
     }
 

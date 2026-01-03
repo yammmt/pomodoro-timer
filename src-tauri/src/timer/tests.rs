@@ -16,7 +16,7 @@ fn test_initial_state_is_idle_work() {
     let state = service.get_state();
 
     assert_eq!(state.phase, Phase::Work);
-    assert_eq!(state.status, Status::Idle);
+    assert_eq!(state.status, Status::WorkReady);
     assert_eq!(state.remaining_secs, WORK_DURATION_SECS);
     assert_eq!(state.duration_secs, WORK_DURATION_SECS);
     assert!(!state.completion_flag);
@@ -116,7 +116,7 @@ fn test_clear_from_running_state() {
 
     let cleared = service.get_state();
     assert_eq!(cleared.phase, Phase::Work);
-    assert_eq!(cleared.status, Status::Idle);
+    assert_eq!(cleared.status, Status::WorkReady);
     assert_eq!(cleared.remaining_secs, WORK_DURATION_SECS);
     assert!(!cleared.completion_flag);
     assert_eq!(cleared.state_label, "Ready to work");
@@ -132,7 +132,7 @@ fn test_clear_from_paused_state() {
     service.clear().unwrap();
 
     let cleared = service.get_state();
-    assert_eq!(cleared.status, Status::Idle);
+    assert_eq!(cleared.status, Status::WorkReady);
     assert_eq!(cleared.remaining_secs, WORK_DURATION_SECS);
 }
 
@@ -149,10 +149,11 @@ fn test_work_completion_transitions_to_break() {
 
     let state = service.get_state();
     assert_eq!(state.phase, Phase::Break);
-    assert_eq!(state.status, Status::Running);
+    // no auto-start
+    assert_eq!(state.status, Status::BreakReady);
     assert_eq!(state.remaining_secs, BREAK_DURATION_SECS);
     assert!(state.completion_flag);
-    assert_eq!(state.state_label, "Break time");
+    assert_eq!(state.state_label, "Break ready - press Start");
 }
 
 #[test]
@@ -166,9 +167,9 @@ fn test_break_completion_sets_complete_status() {
     service.update_remaining();
 
     let state = service.get_state();
-    assert_eq!(state.status, Status::Complete);
+    assert_eq!(state.status, Status::WorkReady);
     assert!(state.completion_flag);
-    assert_eq!(state.state_label, "Break complete");
+    assert_eq!(state.state_label, "Work ready - press Start");
 }
 
 #[test]
@@ -204,7 +205,7 @@ fn test_clear_during_break() {
 
     let cleared = service.get_state();
     assert_eq!(cleared.phase, Phase::Work);
-    assert_eq!(cleared.status, Status::Idle);
+    assert_eq!(cleared.status, Status::WorkReady);
     assert_eq!(cleared.remaining_secs, WORK_DURATION_SECS);
 }
 
@@ -278,7 +279,7 @@ fn test_cannot_pause_when_idle() {
 
     // Should return error
     assert!(result.is_err());
-    assert_eq!(service.get_state().status, Status::Idle);
+    assert_eq!(service.get_state().status, Status::WorkReady);
 }
 
 #[test]
@@ -288,7 +289,7 @@ fn test_cannot_resume_when_not_paused() {
 
     // Should return error
     assert!(result.is_err());
-    assert_eq!(service.get_state().status, Status::Idle);
+    assert_eq!(service.get_state().status, Status::WorkReady);
 }
 
 #[test]
@@ -297,7 +298,7 @@ fn test_clear_when_idle_remains_idle() {
     service.clear().unwrap();
 
     let state = service.get_state();
-    assert_eq!(state.status, Status::Idle);
+    assert_eq!(state.status, Status::WorkReady);
     assert_eq!(state.remaining_secs, WORK_DURATION_SECS);
 }
 
@@ -314,7 +315,8 @@ fn test_overrun_advances_to_break() {
 
     let state = service.get_state();
     assert_eq!(state.phase, Phase::Break);
-    assert_eq!(state.status, Status::Running);
+    // no auto-start
+    assert_eq!(state.status, Status::BreakReady);
     assert_eq!(state.remaining_secs, BREAK_DURATION_SECS);
     assert!(state.completion_flag);
 }
@@ -330,4 +332,339 @@ fn test_monotonic_timing_handles_system_clock_changes() {
     // Verify we're using Instant (monotonic) not SystemTime
     let instant2 = service.started_instant.unwrap();
     assert_eq!(instant1, instant2); // Same instant throughout running session
+}
+
+// ============================================================================
+// User Story 1: Manual break initiation after work session
+// ============================================================================
+
+#[test]
+fn test_work_completion_transitions_to_break_ready() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Simulate work completion by sleeping past duration
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+
+    let state = service.get_state();
+    assert_eq!(state.phase, Phase::Break);
+    assert_eq!(state.status, Status::BreakReady);
+    assert_eq!(state.remaining_secs, BREAK_DURATION_SECS);
+    assert!(state.completion_flag);
+}
+
+#[test]
+fn test_completion_flag_set_on_work_completion() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Before completion
+    assert!(!service.completion_flag);
+
+    // After completion
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+
+    assert!(service.completion_flag);
+}
+
+#[test]
+fn test_start_from_break_ready_begins_break_countdown() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+
+    // Should be in BreakReady state
+    assert_eq!(service.status, Status::BreakReady);
+
+    // Start break countdown
+    service.start().unwrap();
+
+    let state = service.get_state();
+    assert_eq!(state.phase, Phase::Break);
+    assert_eq!(state.status, Status::Running);
+    assert_eq!(state.remaining_secs, BREAK_DURATION_SECS);
+    assert!(!state.completion_flag); // Should be cleared when starting
+}
+
+// ===== User Story 2: Pause/resume break sessions =====
+
+#[test]
+fn test_pause_during_break_session() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and start break
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+    service.start().unwrap(); // Start break
+
+    // Pause break session after a few seconds
+    sleep(Duration::from_secs(2));
+    let paused_state = service.pause().unwrap();
+
+    assert_eq!(paused_state.phase, Phase::Break);
+    assert_eq!(paused_state.status, Status::Paused);
+    assert!(paused_state.remaining_secs < BREAK_DURATION_SECS);
+    assert!(paused_state.remaining_secs > 0);
+    assert!(paused_state.state_label.contains("Paused"));
+    assert!(paused_state.state_label.contains("break"));
+}
+
+#[test]
+fn test_resume_after_pause_during_break() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and start break
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+    service.start().unwrap(); // Start break
+
+    // Pause and resume
+    sleep(Duration::from_secs(2));
+    service.pause().unwrap();
+    let remaining_before = service.remaining_secs;
+
+    let resumed_state = service.resume().unwrap();
+
+    assert_eq!(resumed_state.phase, Phase::Break);
+    assert_eq!(resumed_state.status, Status::Running);
+    assert_eq!(resumed_state.remaining_secs, remaining_before);
+    assert_eq!(resumed_state.state_label, "Break time");
+}
+
+#[test]
+fn test_break_countdown_continues_after_resume() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and start break
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+    service.start().unwrap(); // Start break
+
+    // Pause, wait, then resume
+    sleep(Duration::from_secs(1));
+    service.pause().unwrap();
+    let remaining_at_pause = service.remaining_secs;
+
+    sleep(Duration::from_secs(2)); // Time should NOT progress while paused
+    service.resume().unwrap();
+
+    sleep(Duration::from_secs(1)); // Time SHOULD progress after resume
+    let state = service.get_state();
+
+    // Remaining should be ~1 second less than when paused (accounting for the sleep after resume)
+    assert!(state.remaining_secs < remaining_at_pause);
+    assert!(state.remaining_secs >= remaining_at_pause - 2); // Allow some tolerance
+}
+
+// ===== User Story 3: Break completion and cycle restart =====
+
+#[test]
+fn test_break_completion_transitions_to_work_ready() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and start break
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+    service.start().unwrap(); // Start break
+
+    // Complete break session
+    sleep(Duration::from_secs(BREAK_DURATION_SECS as u64 + 1));
+    let state = service.get_state();
+
+    // Should transition to WorkReady (not auto-start work)
+    assert_eq!(state.phase, Phase::Work);
+    assert_eq!(state.status, Status::WorkReady);
+    assert_eq!(state.remaining_secs, WORK_DURATION_SECS);
+    assert_eq!(state.duration_secs, WORK_DURATION_SECS);
+    assert!(state.state_label.contains("Work ready"));
+}
+
+#[test]
+fn test_completion_flag_set_on_break_completion() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and start break
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+    service.start().unwrap(); // Start break
+
+    // Before completion
+    assert!(!service.completion_flag);
+
+    // Complete break session
+    sleep(Duration::from_secs(BREAK_DURATION_SECS as u64 + 1));
+    service.get_state();
+
+    // Flag should be set to trigger chime
+    assert!(service.completion_flag);
+}
+
+#[test]
+fn test_start_from_work_ready_after_break_begins_work_countdown() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and start break
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+    service.start().unwrap(); // Start break
+
+    // Complete break session
+    sleep(Duration::from_secs(BREAK_DURATION_SECS as u64 + 1));
+    service.get_state();
+
+    // Should be in WorkReady state
+    assert_eq!(service.status, Status::WorkReady);
+
+    // Start new work session
+    service.start().unwrap();
+
+    let state = service.get_state();
+    assert_eq!(state.phase, Phase::Work);
+    assert_eq!(state.status, Status::Running);
+    assert_eq!(state.remaining_secs, WORK_DURATION_SECS);
+    assert!(!state.completion_flag); // Should be cleared when starting
+    assert_eq!(state.state_label, "Working");
+}
+
+// ===== User Story 4: Clear during break ready state =====
+
+#[test]
+fn test_clear_from_break_ready_returns_to_work_ready() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session to reach BreakReady
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+
+    assert_eq!(service.status, Status::BreakReady);
+
+    // Clear should skip break and return to work-ready
+    let state = service.clear().unwrap();
+
+    assert_eq!(state.phase, Phase::Work);
+    assert_eq!(state.status, Status::WorkReady);
+    assert_eq!(state.remaining_secs, WORK_DURATION_SECS);
+    assert!(!state.completion_flag);
+    assert!(state.state_label.contains("Ready to work"));
+}
+
+#[test]
+fn test_clear_from_running_break_returns_to_work_ready() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and start break
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+    service.start().unwrap(); // Start break
+
+    // Let break run for a bit
+    sleep(Duration::from_secs(2));
+
+    // Clear should abort break and return to work-ready
+    let state = service.clear().unwrap();
+
+    assert_eq!(state.phase, Phase::Work);
+    assert_eq!(state.status, Status::WorkReady);
+    assert_eq!(state.remaining_secs, WORK_DURATION_SECS);
+    assert!(!state.completion_flag);
+}
+
+#[test]
+fn test_clear_from_paused_break_returns_to_work_ready() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and start break
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+    service.start().unwrap(); // Start break
+
+    // Pause break
+    sleep(Duration::from_secs(1));
+    service.pause().unwrap();
+
+    assert_eq!(service.status, Status::Paused);
+    assert_eq!(service.phase, Phase::Break);
+
+    // Clear should abort paused break and return to work-ready
+    let state = service.clear().unwrap();
+
+    assert_eq!(state.phase, Phase::Work);
+    assert_eq!(state.status, Status::WorkReady);
+    assert_eq!(state.remaining_secs, WORK_DURATION_SECS);
+    assert!(!state.completion_flag);
+}
+
+// ===== Edge Cases =====
+
+#[test]
+fn test_start_while_running_returns_error() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Try to start again while running
+    let result = service.start();
+
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err(), "Timer already running");
+}
+
+#[test]
+fn test_pause_near_session_end_transitions_correctly() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Wait until near the end (1 second before completion)
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 - 1));
+
+    // Pause with 1 second remaining
+    service.pause().unwrap();
+    let remaining_at_pause = service.remaining_secs;
+
+    assert!(remaining_at_pause <= 2); // Should be ~1 second
+    assert_eq!(service.status, Status::Paused);
+
+    // Resume and let it complete
+    service.resume().unwrap();
+    sleep(Duration::from_secs(2));
+
+    let state = service.get_state();
+
+    // Should have transitioned to BreakReady
+    assert_eq!(state.status, Status::BreakReady);
+    assert!(state.completion_flag);
+}
+
+#[test]
+fn test_ready_states_maintained_indefinitely() {
+    let mut service = TimerService::new();
+
+    // WorkReady state should persist
+    assert_eq!(service.status, Status::WorkReady);
+    sleep(Duration::from_secs(3));
+    let state = service.get_state();
+    assert_eq!(state.status, Status::WorkReady);
+
+    // Start and complete work to reach BreakReady
+    service.start().unwrap();
+    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    service.get_state();
+
+    // BreakReady state should persist
+    assert_eq!(service.status, Status::BreakReady);
+    sleep(Duration::from_secs(3));
+    let state = service.get_state();
+    assert_eq!(state.status, Status::BreakReady);
 }
