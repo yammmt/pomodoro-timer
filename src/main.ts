@@ -9,9 +9,11 @@ interface TimerState {
   stateLabel: string;
 }
 
+const CHIME_DURATION_SEC = 3.0;
+
 let pollInterval: number | null = null;
 let lastCompletionFlag = false;
-let audio: HTMLAudioElement | null = null;
+let audioContext: AudioContext | null = null;
 
 let startBtn: HTMLButtonElement;
 let pauseBtn: HTMLButtonElement;
@@ -20,27 +22,43 @@ let clearBtn: HTMLButtonElement;
 let timerDisplay: HTMLDivElement;
 let stateLabel: HTMLDivElement;
 
-function initAudio() {
-  // Create audio element with embedded chime
-  audio = document.createElement('audio');
-  audio.preload = 'auto';
-  const source = document.createElement('source');
-  source.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFgYJ+fH+Cg4aCgX1+fn9/gH9+fX1+f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af39+fX5/f4B/gH+Af3=';
-  source.type = 'audio/wav';
-  audio.appendChild(source);
+function playCompletionChime() {
+  try {
+    // Create AudioContext on first use (required for user gesture in some browsers)
+    if (!audioContext) {
+      audioContext = new AudioContext();
+    }
+
+    // Resume context if suspended (browser autoplay policy)
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Pleasant chime: 880Hz (A5)
+    oscillator.frequency.value = 880;
+    oscillator.type = 'sine';
+
+    // Fade out to avoid click
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + CHIME_DURATION_SEC);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + CHIME_DURATION_SEC);
+  } catch (err) {
+    console.warn('Could not play chime:', err);
+  }
 }
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
-
-function playCompletionChime() {
-  if (audio) {
-    audio.currentTime = 0;
-    audio.play().catch(err => console.warn('Could not play chime:', err));
-  }
 }
 
 async function updateUI() {
@@ -137,8 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Attach event listeners
   attachEventListeners();
 
-  // Initialize audio and UI
-  initAudio();
+  // Initialize UI
   updateUI();
 
   console.log('Pomodoro Timer initialized');
