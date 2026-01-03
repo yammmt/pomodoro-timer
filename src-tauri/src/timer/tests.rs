@@ -10,6 +10,22 @@ use super::*;
 use std::thread::sleep;
 use std::time::Duration;
 
+// Helper: simulate elapsed time without real waiting by backdating started_instant
+fn fast_forward(service: &mut TimerService, seconds: u64) {
+    service.started_instant = Some(Instant::now() - Duration::from_secs(seconds));
+    service.update_remaining();
+}
+
+fn complete_work_session(service: &mut TimerService) {
+    service.duration_secs = WORK_DURATION_SECS;
+    fast_forward(service, WORK_DURATION_SECS as u64 + 1);
+}
+
+fn complete_break_session(service: &mut TimerService) {
+    service.duration_secs = BREAK_DURATION_SECS;
+    fast_forward(service, BREAK_DURATION_SECS as u64 + 1);
+}
+
 #[test]
 fn test_initial_state_is_idle_work() {
     let mut service = TimerService::new();
@@ -343,8 +359,8 @@ fn test_work_completion_transitions_to_break_ready() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Simulate work completion by sleeping past duration
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Simulate work completion without real-time wait
+    complete_work_session(&mut service);
 
     let state = service.get_state();
     assert_eq!(state.phase, Phase::Break);
@@ -361,8 +377,8 @@ fn test_completion_flag_set_on_work_completion() {
     // Before completion
     assert!(!service.completion_flag);
 
-    // After completion
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // After completion (simulated)
+    complete_work_session(&mut service);
     service.get_state();
 
     assert!(service.completion_flag);
@@ -373,8 +389,8 @@ fn test_start_from_break_ready_begins_break_countdown() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session (simulated)
+    complete_work_session(&mut service);
     service.get_state();
 
     // Should be in BreakReady state
@@ -397,13 +413,13 @@ fn test_pause_during_break_session() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session and start break
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session and start break (simulated)
+    complete_work_session(&mut service);
     service.get_state();
     service.start().unwrap(); // Start break
 
-    // Pause break session after a few seconds
-    sleep(Duration::from_secs(2));
+    // Simulate a few seconds into break
+    fast_forward(&mut service, 2);
     let paused_state = service.pause().unwrap();
 
     assert_eq!(paused_state.phase, Phase::Break);
@@ -419,13 +435,13 @@ fn test_resume_after_pause_during_break() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session and start break
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session and start break (simulated)
+    complete_work_session(&mut service);
     service.get_state();
     service.start().unwrap(); // Start break
 
-    // Pause and resume
-    sleep(Duration::from_secs(2));
+    // Simulate a couple seconds into break, then pause
+    fast_forward(&mut service, 2);
     service.pause().unwrap();
     let remaining_before = service.remaining_secs;
 
@@ -442,23 +458,23 @@ fn test_break_countdown_continues_after_resume() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session and start break
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session and start break (simulated)
+    complete_work_session(&mut service);
     service.get_state();
     service.start().unwrap(); // Start break
 
-    // Pause, wait, then resume
-    sleep(Duration::from_secs(1));
+    // Simulate 1 second into break, then pause
+    fast_forward(&mut service, 1);
     service.pause().unwrap();
     let remaining_at_pause = service.remaining_secs;
 
-    sleep(Duration::from_secs(2)); // Time should NOT progress while paused
+    // While paused, time should not progress (no fast-forward)
     service.resume().unwrap();
 
-    sleep(Duration::from_secs(1)); // Time SHOULD progress after resume
+    // Simulate 1 second of running after resume
+    fast_forward(&mut service, 1);
     let state = service.get_state();
 
-    // Remaining should be ~1 second less than when paused (accounting for the sleep after resume)
     assert!(state.remaining_secs < remaining_at_pause);
     assert!(state.remaining_secs >= remaining_at_pause - 2); // Allow some tolerance
 }
@@ -470,13 +486,13 @@ fn test_break_completion_transitions_to_work_ready() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session and start break
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session and start break (simulated)
+    complete_work_session(&mut service);
     service.get_state();
     service.start().unwrap(); // Start break
 
-    // Complete break session
-    sleep(Duration::from_secs(BREAK_DURATION_SECS as u64 + 1));
+    // Complete break session (simulated)
+    complete_break_session(&mut service);
     let state = service.get_state();
 
     // Should transition to WorkReady (not auto-start work)
@@ -492,16 +508,16 @@ fn test_completion_flag_set_on_break_completion() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session and start break
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session and start break (simulated)
+    complete_work_session(&mut service);
     service.get_state();
     service.start().unwrap(); // Start break
 
     // Before completion
     assert!(!service.completion_flag);
 
-    // Complete break session
-    sleep(Duration::from_secs(BREAK_DURATION_SECS as u64 + 1));
+    // Complete break session (simulated)
+    complete_break_session(&mut service);
     service.get_state();
 
     // Flag should be set to trigger chime
@@ -513,13 +529,13 @@ fn test_start_from_work_ready_after_break_begins_work_countdown() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session and start break
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session and start break (simulated)
+    complete_work_session(&mut service);
     service.get_state();
     service.start().unwrap(); // Start break
 
-    // Complete break session
-    sleep(Duration::from_secs(BREAK_DURATION_SECS as u64 + 1));
+    // Complete break session (simulated)
+    complete_break_session(&mut service);
     service.get_state();
 
     // Should be in WorkReady state
@@ -543,8 +559,8 @@ fn test_clear_from_break_ready_returns_to_work_ready() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session to reach BreakReady
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session to reach BreakReady (simulated)
+    complete_work_session(&mut service);
     service.get_state();
 
     assert_eq!(service.status, Status::BreakReady);
@@ -564,13 +580,13 @@ fn test_clear_from_running_break_returns_to_work_ready() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session and start break
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session and start break (simulated)
+    complete_work_session(&mut service);
     service.get_state();
     service.start().unwrap(); // Start break
 
-    // Let break run for a bit
-    sleep(Duration::from_secs(2));
+    // Simulate a bit of break time
+    fast_forward(&mut service, 2);
 
     // Clear should abort break and return to work-ready
     let state = service.clear().unwrap();
@@ -586,13 +602,13 @@ fn test_clear_from_paused_break_returns_to_work_ready() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Complete work session and start break
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    // Complete work session and start break (simulated)
+    complete_work_session(&mut service);
     service.get_state();
     service.start().unwrap(); // Start break
 
-    // Pause break
-    sleep(Duration::from_secs(1));
+    // Simulate 1 second into break then pause
+    fast_forward(&mut service, 1);
     service.pause().unwrap();
 
     assert_eq!(service.status, Status::Paused);
@@ -626,8 +642,8 @@ fn test_pause_near_session_end_transitions_correctly() {
     let mut service = TimerService::new();
     service.start().unwrap();
 
-    // Wait until near the end (1 second before completion)
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 - 1));
+    // Fast-forward to 1 second before completion
+    fast_forward(&mut service, WORK_DURATION_SECS as u64 - 1);
 
     // Pause with 1 second remaining
     service.pause().unwrap();
@@ -659,7 +675,7 @@ fn test_ready_states_maintained_indefinitely() {
 
     // Start and complete work to reach BreakReady
     service.start().unwrap();
-    sleep(Duration::from_secs(WORK_DURATION_SECS as u64 + 1));
+    complete_work_session(&mut service);
     service.get_state();
 
     // BreakReady state should persist
