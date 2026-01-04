@@ -19,6 +19,8 @@ let startBtn: HTMLButtonElement;
 let pauseBtn: HTMLButtonElement;
 let resumeBtn: HTMLButtonElement;
 let clearBtn: HTMLButtonElement;
+let workBtn: HTMLButtonElement;
+let breakBtn: HTMLButtonElement;
 let timerDisplay: HTMLDivElement;
 let stateLabel: HTMLDivElement;
 let confirmDialog: HTMLDivElement;
@@ -26,7 +28,11 @@ let confirmClearBtn: HTMLButtonElement;
 let cancelClearBtn: HTMLButtonElement;
 
 function shouldConfirmClear(state: TimerState): boolean {
-  return state.status === 'running' || state.status === 'paused';
+  // Confirm if timer is running or paused, OR if in Ready state with paused time
+  const hasActivity = state.status === 'running' || state.status === 'paused';
+  const hasPausedTime = (state.status === 'workReady' || state.status === 'breakReady')
+    && state.remainingSecs !== state.durationSecs;
+  return hasActivity || hasPausedTime;
 }
 
 function showClearConfirmDialog() {
@@ -84,11 +90,23 @@ async function updateUI() {
     timerDisplay.textContent = formatTime(state.remainingSecs);
     stateLabel.textContent = state.stateLabel;
 
+    // Sync active mode button with backend phase
+    if (state.phase === 'work') {
+      workBtn.classList.add('active');
+      breakBtn.classList.remove('active');
+    } else {
+      breakBtn.classList.add('active');
+      workBtn.classList.remove('active');
+    }
+
     // Update button states - Start enabled when in Ready states
     startBtn.disabled = !(state.status === 'workReady' || state.status === 'breakReady');
     pauseBtn.disabled = state.status !== 'running';
     resumeBtn.disabled = state.status !== 'paused';
-    clearBtn.disabled = state.status === 'workReady' || state.status === 'breakReady';
+    // Clear enabled unless in fresh Ready state (remaining time = full duration)
+    const isFreshState = ((state.status === 'workReady' || state.status === 'breakReady')
+      && state.remainingSecs === state.durationSecs);
+    clearBtn.disabled = isFreshState;
 
     // Detect completion transitions and play chime
     if (state.completionFlag && !lastCompletionFlag) {
@@ -136,6 +154,11 @@ function attachEventListeners() {
 
       if (shouldConfirmClear(state)) {
         showClearConfirmDialog();
+      } else {
+        // Directly clear without confirmation for Ready states
+        await invoke('clear_timer');
+        await updateUI();
+        stopPolling();
       }
     } catch (error) {
       console.error('Failed to get state:', error);
@@ -160,6 +183,24 @@ function attachEventListeners() {
   confirmDialog.addEventListener('click', (event) => {
     if (event.target === confirmDialog) {
       hideClearConfirmDialog();
+    }
+  });
+
+  workBtn.addEventListener('click', async () => {
+    try {
+      await invoke('set_phase', { phase: 'work' });
+      await updateUI();
+    } catch (error) {
+      console.error('Failed to set work phase:', error);
+    }
+  });
+
+  breakBtn.addEventListener('click', async () => {
+    try {
+      await invoke('set_phase', { phase: 'break' });
+      await updateUI();
+    } catch (error) {
+      console.error('Failed to set break phase:', error);
     }
   });
 
@@ -190,6 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
   pauseBtn = document.getElementById('pause-btn') as HTMLButtonElement;
   resumeBtn = document.getElementById('resume-btn') as HTMLButtonElement;
   clearBtn = document.getElementById('clear-btn') as HTMLButtonElement;
+  workBtn = document.getElementById('work-btn') as HTMLButtonElement;
+  breakBtn = document.getElementById('break-btn') as HTMLButtonElement;
   timerDisplay = document.getElementById('timer-display') as HTMLDivElement;
   stateLabel = document.getElementById('state-label') as HTMLDivElement;
   confirmDialog = document.getElementById('clear-confirm-dialog') as HTMLDivElement;

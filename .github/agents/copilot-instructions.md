@@ -23,6 +23,7 @@ cargo test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECH
 Rust 1.92: Follow standard conventions
 
 ## Recent Changes
+- 006-work-break-toggle: Added Rust 1.92 + tauri 2.9
 - 003-align-buttons: Added HTML5/CSS3 + TypeScript + None (HTML/CSS only, TypeScript runtime already in place)
 
 - 002-github-actions-ci: Added Rust 1.92 + auri 2.9, cargo (build tool)
