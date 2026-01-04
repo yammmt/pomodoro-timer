@@ -33,13 +33,13 @@
 
 **⚠️ CRITICAL**: No UI work can begin until these tasks are complete
 
-- [ ] T002 [P] Update TimerService struct in [src-tauri/src/timer.rs](src-tauri/src/timer.rs) – replace `paused_remaining: Option<u32>` with `paused_work_secs: Option<u32>` and `paused_break_secs: Option<u32>` fields (see data-model.md Section 1)
+- [x] T002 [P] Update TimerService struct in [src-tauri/src/timer.rs](src-tauri/src/timer.rs) – replace `paused_remaining: Option<u32>` with `paused_work_secs: Option<u32>` and `paused_break_secs: Option<u32>` fields (see data-model.md Section 1)
 
-- [ ] T003 [P] Update `TimerService::new()` constructor in [src-tauri/src/timer.rs](src-tauri/src/timer.rs) to initialize both `paused_work_secs: None` and `paused_break_secs: None`
+- [x] T003 [P] Update `TimerService::new()` constructor in [src-tauri/src/timer.rs](src-tauri/src/timer.rs) to initialize both `paused_work_secs: None` and `paused_break_secs: None`
 
-- [ ] T004 [P] Refactor `update_remaining()` method in [src-tauri/src/timer.rs](src-tauri/src/timer.rs) to use phase-specific paused time fields instead of single `paused_remaining` (see quickstart.md Step 1.2)
+- [x] T004 [P] Refactor `update_remaining()` method in [src-tauri/src/timer.rs](src-tauri/src/timer.rs) to use phase-specific paused time fields instead of single `paused_remaining` (see quickstart.md Step 1.2)
 
-- [ ] T005 Implement `set_phase(new_phase: Phase)` method in `TimerService` at [src-tauri/src/timer.rs](src-tauri/src/timer.rs) with:
+- [x] T005 Implement `set_phase(new_phase: Phase)` method in `TimerService` at [src-tauri/src/timer.rs](src-tauri/src/timer.rs) with:
   - Idempotent check: return early if `new_phase == self.phase`
   - Pause running timer if currently `Running`
   - Save `remaining_secs` to exiting phase's field (`paused_work_secs` or `paused_break_secs`)
@@ -47,12 +47,14 @@
   - Load paused time from new phase field or use standard duration
   - (See quickstart.md Step 1.3 for full implementation)
 
-- [ ] T006 Add unit tests for `set_phase()` in [src-tauri/src/timer/tests.rs](src-tauri/src/timer/tests.rs):
+- [x] T006 Add unit tests for `set_phase()` in [src-tauri/src/timer/tests.rs](src-tauri/src/timer/tests.rs):
   - `test_set_phase_idempotent()` – verify clicking same phase twice doesn't change state
   - `test_set_phase_preserves_paused_time()` – verify Work→Break→Work restores original time
   - `test_set_phase_pauses_running_timer()` – verify Running status transitions to Paused on switch
   - `test_set_phase_loads_standard_duration()` – verify new phase shows correct standard duration
   - Run: `cd src-tauri && cargo test timer::tests::test_set_phase`
+
+**Status**: ✅ COMPLETE – All tests passing (40/40 timer module tests pass)
 
 **Checkpoint**: Timer module ready for IPC command integration
 

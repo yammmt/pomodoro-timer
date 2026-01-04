@@ -688,3 +688,125 @@ fn test_ready_states_maintained_indefinitely() {
     let state = service.get_state();
     assert_eq!(state.status, Status::BreakReady);
 }
+
+// Tests for set_phase() method
+#[test]
+fn test_set_phase_idempotent() {
+    let mut service = TimerService::new();
+    let initial_remaining = service.remaining_secs;
+
+    // Call set_phase with same phase
+    service.set_phase(Phase::Work);
+
+    // Should not change state
+    assert_eq!(service.phase, Phase::Work);
+    assert_eq!(service.remaining_secs, initial_remaining);
+    assert_eq!(service.status, Status::WorkReady);
+}
+
+#[test]
+fn test_set_phase_preserves_paused_time() {
+    let mut service = TimerService::new();
+
+    // Start work, fast forward 5 minutes, pause it
+    service.start().unwrap();
+    fast_forward(&mut service, 300);
+    service.pause().unwrap();
+    let work_paused_secs = service.get_state().remaining_secs;
+    assert!(work_paused_secs < WORK_DURATION_SECS);
+
+    // Switch to break
+    service.set_phase(Phase::Break);
+    assert_eq!(service.phase, Phase::Break);
+    assert_eq!(service.remaining_secs, BREAK_DURATION_SECS);
+    assert_eq!(service.status, Status::BreakReady);
+    assert_eq!(service.paused_work_secs, Some(work_paused_secs));
+
+    // Switch back to work
+    service.set_phase(Phase::Work);
+    assert_eq!(service.phase, Phase::Work);
+    assert_eq!(service.remaining_secs, work_paused_secs); // Restored
+    assert_eq!(service.status, Status::WorkReady);
+}
+
+#[test]
+fn test_set_phase_pauses_running_timer() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+    fast_forward(&mut service, 300); // 5 minutes
+
+    // Still running, capture remaining
+    let work_state = service.get_state();
+    assert_eq!(work_state.status, Status::Running);
+    let remaining_at_switch = work_state.remaining_secs;
+    assert!(remaining_at_switch < WORK_DURATION_SECS);
+
+    // Switch to break
+    service.set_phase(Phase::Break);
+
+    // Work should be paused and saved
+    assert_eq!(service.phase, Phase::Break);
+    assert_eq!(service.status, Status::BreakReady);
+    assert_eq!(service.paused_work_secs, Some(remaining_at_switch));
+
+    // Break should show standard duration
+    assert_eq!(service.remaining_secs, BREAK_DURATION_SECS);
+}
+
+#[test]
+fn test_set_phase_loads_standard_duration() {
+    let mut service = TimerService::new();
+
+    // Start and pause work after 5 minutes
+    service.start().unwrap();
+    fast_forward(&mut service, 300);
+    service.pause().unwrap();
+    assert!(service.remaining_secs < WORK_DURATION_SECS);
+
+    // Switch to break - should load standard break duration
+    service.set_phase(Phase::Break);
+    assert_eq!(service.remaining_secs, BREAK_DURATION_SECS);
+    assert_eq!(service.duration_secs, BREAK_DURATION_SECS);
+
+    // Switch to work - should restore paused work time
+    service.set_phase(Phase::Work);
+    assert!(service.remaining_secs < WORK_DURATION_SECS);
+    assert!(service.remaining_secs > 0);
+}
+
+#[test]
+fn test_set_phase_paused_to_paused_preserves_both() {
+    let mut service = TimerService::new();
+
+    // Pause work at 20:00 (after 5 min)
+    service.start().unwrap();
+    fast_forward(&mut service, 300);
+    service.pause().unwrap();
+    let work_remaining = service.get_state().remaining_secs;
+    assert_eq!(service.paused_work_secs, Some(work_remaining)); // Verify saved
+
+    // Switch to break, start and pause at 4:00 (after 1 min)
+    service.set_phase(Phase::Break);
+    assert_eq!(service.phase, Phase::Break);
+    // paused_work_secs should still be saved from work phase
+    assert_eq!(service.paused_work_secs, Some(work_remaining));
+
+    service.start().unwrap();
+    fast_forward(&mut service, 60);
+    service.pause().unwrap();
+    let break_remaining = service.get_state().remaining_secs;
+
+    // Verify both are saved
+    assert_eq!(service.paused_work_secs, Some(work_remaining));
+    assert_eq!(service.paused_break_secs, Some(break_remaining));
+
+    // Switch back to work - should see work remaining
+    service.set_phase(Phase::Work);
+    assert_eq!(service.remaining_secs, work_remaining);
+    assert_eq!(service.phase, Phase::Work);
+
+    // Switch to break - should see break remaining
+    service.set_phase(Phase::Break);
+    assert_eq!(service.remaining_secs, break_remaining);
+    assert_eq!(service.phase, Phase::Break);
+}
