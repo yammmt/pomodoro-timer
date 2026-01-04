@@ -1,6 +1,6 @@
 mod timer;
 
-use timer::{SharedTimerService, TimerState, create_timer_service};
+use timer::{Phase, SharedTimerService, TimerState, create_timer_service};
 
 #[tauri::command]
 fn get_state(timer: tauri::State<SharedTimerService>) -> Result<TimerState, String> {
@@ -32,6 +32,19 @@ fn clear_timer(timer: tauri::State<SharedTimerService>) -> Result<TimerState, St
     service.clear()
 }
 
+#[tauri::command]
+fn set_phase(phase: String, timer: tauri::State<SharedTimerService>) -> Result<TimerState, String> {
+    let phase_enum = match phase.to_lowercase().as_str() {
+        "work" => Phase::Work,
+        "break" => Phase::Break,
+        _ => return Err("Invalid phase. Use 'work' or 'break'.".to_string()),
+    };
+
+    let mut service = timer.lock().map_err(|e| e.to_string())?;
+    service.set_phase(phase_enum);
+    Ok(service.get_state())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -41,7 +54,8 @@ pub fn run() {
             start_timer,
             pause_timer,
             resume_timer,
-            clear_timer
+            clear_timer,
+            set_phase
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

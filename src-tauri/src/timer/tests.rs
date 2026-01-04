@@ -726,7 +726,7 @@ fn test_set_phase_preserves_paused_time() {
     service.set_phase(Phase::Work);
     assert_eq!(service.phase, Phase::Work);
     assert_eq!(service.remaining_secs, work_paused_secs); // Restored
-    assert_eq!(service.status, Status::WorkReady);
+    assert_eq!(service.status, Status::Paused);
 }
 
 #[test]

@@ -252,14 +252,26 @@ impl TimerService {
             Phase::Work => {
                 self.duration_secs = WORK_DURATION_SECS;
                 self.remaining_secs = self.paused_work_secs.unwrap_or(WORK_DURATION_SECS);
-                self.status = Status::WorkReady;
-                self.state_label = "Ready to work".to_string();
+                // Set status to Paused if we have paused time, otherwise WorkReady
+                if self.paused_work_secs.is_some() {
+                    self.status = Status::Paused;
+                    self.state_label = "Paused (work)".to_string();
+                } else {
+                    self.status = Status::WorkReady;
+                    self.state_label = "Ready to work".to_string();
+                }
             }
             Phase::Break => {
                 self.duration_secs = BREAK_DURATION_SECS;
                 self.remaining_secs = self.paused_break_secs.unwrap_or(BREAK_DURATION_SECS);
-                self.status = Status::BreakReady;
-                self.state_label = "Ready to break".to_string();
+                // Set status to Paused if we have paused time, otherwise BreakReady
+                if self.paused_break_secs.is_some() {
+                    self.status = Status::Paused;
+                    self.state_label = "Paused (break)".to_string();
+                } else {
+                    self.status = Status::BreakReady;
+                    self.state_label = "Ready to break".to_string();
+                }
             }
         }
 
