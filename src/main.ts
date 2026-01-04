@@ -21,6 +21,22 @@ let resumeBtn: HTMLButtonElement;
 let clearBtn: HTMLButtonElement;
 let timerDisplay: HTMLDivElement;
 let stateLabel: HTMLDivElement;
+let confirmDialog: HTMLDivElement;
+let confirmClearBtn: HTMLButtonElement;
+let cancelClearBtn: HTMLButtonElement;
+
+function shouldConfirmClear(state: TimerState): boolean {
+  return state.status === 'running' || state.status === 'paused';
+}
+
+function showClearConfirmDialog() {
+  confirmDialog.style.display = 'flex';
+  confirmClearBtn.focus();
+}
+
+function hideClearConfirmDialog() {
+  confirmDialog.style.display = 'none';
+}
 
 function playCompletionChime() {
   try {
@@ -72,7 +88,7 @@ async function updateUI() {
     startBtn.disabled = !(state.status === 'workReady' || state.status === 'breakReady');
     pauseBtn.disabled = state.status !== 'running';
     resumeBtn.disabled = state.status !== 'paused';
-    clearBtn.disabled = false;
+    clearBtn.disabled = state.status === 'workReady' || state.status === 'breakReady';
 
     // Detect completion transitions and play chime
     if (state.completionFlag && !lastCompletionFlag) {
@@ -116,11 +132,40 @@ function attachEventListeners() {
 
   clearBtn.addEventListener('click', async () => {
     try {
+      const state = await invoke<TimerState>('get_state');
+
+      if (shouldConfirmClear(state)) {
+        showClearConfirmDialog();
+      }
+    } catch (error) {
+      console.error('Failed to get state:', error);
+    }
+  });
+
+  confirmClearBtn.addEventListener('click', async () => {
+    try {
       await invoke('clear_timer');
+      hideClearConfirmDialog();
       await updateUI();
       stopPolling();
     } catch (error) {
       console.error('Failed to clear timer:', error);
+    }
+  });
+
+  cancelClearBtn.addEventListener('click', () => {
+    hideClearConfirmDialog();
+  });
+
+  confirmDialog.addEventListener('click', (event) => {
+    if (event.target === confirmDialog) {
+      hideClearConfirmDialog();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && confirmDialog.style.display === 'flex') {
+      hideClearConfirmDialog();
     }
   });
 }
@@ -147,6 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
   clearBtn = document.getElementById('clear-btn') as HTMLButtonElement;
   timerDisplay = document.getElementById('timer-display') as HTMLDivElement;
   stateLabel = document.getElementById('state-label') as HTMLDivElement;
+  confirmDialog = document.getElementById('clear-confirm-dialog') as HTMLDivElement;
+  confirmClearBtn = document.getElementById('confirm-clear-btn') as HTMLButtonElement;
+  cancelClearBtn = document.getElementById('cancel-clear-btn') as HTMLButtonElement;
 
   // Attach event listeners
   attachEventListeners();

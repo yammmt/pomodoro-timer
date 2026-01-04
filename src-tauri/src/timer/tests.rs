@@ -309,13 +309,17 @@ fn test_cannot_resume_when_not_paused() {
 }
 
 #[test]
-fn test_clear_when_idle_remains_idle() {
+fn test_clear_resets_to_initial_state() {
     let mut service = TimerService::new();
     service.clear().unwrap();
 
     let state = service.get_state();
+    assert_eq!(state.phase, Phase::Work);
     assert_eq!(state.status, Status::WorkReady);
     assert_eq!(state.remaining_secs, WORK_DURATION_SECS);
+    assert_eq!(state.duration_secs, WORK_DURATION_SECS);
+    assert!(!state.completion_flag);
+    assert_eq!(state.state_label, "Ready to work");
 }
 
 #[test]
