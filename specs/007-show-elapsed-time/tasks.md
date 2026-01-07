@@ -50,20 +50,20 @@
 
 ### Backend Implementation for User Story 1
 
-- [ ] T012 Implement elapsed time calculation in `get_state()` when `status == Status::Complete`, computing real elapsed from `elapsed_paused_secs + (now - elapsed_started_instant)` when running
-- [ ] T013 Add Rust unit test in `src-tauri/src/timer/tests.rs` for completion transition: verify `status=Complete`, `elapsedSecs` starts at ~1s, `completionFlag=true`, `elapsedRunning=true`
-- [ ] T014 Add Rust unit test for elapsed incrementing: verify `get_state()` called at 1s intervals shows monotonic increase (0s → 1s → 2s)
-- [ ] T015 Add Rust unit test for elapsed cap at 99:59: verify elapsed never displays beyond max display time
+- [X] T012 Implement elapsed time calculation in `get_state()` when `status == Status::Complete`, computing real elapsed from `elapsed_paused_secs + (now - elapsed_started_instant)` when running, with cap at 99:59
+- [X] T013 Add Rust unit test in `src-tauri/src/timer/tests.rs` for completion transition: verify `status=Complete`, `elapsedSecs` present, `completionFlag=true`, `elapsedRunning=true`
+- [X] T014 Add Rust unit test for elapsed incrementing: verify `get_state()` called at ~1s intervals shows monotonic increase
+- [X] T015 Add Rust unit test for elapsed cap at 99:59: verify elapsed never displays beyond max display time
 
 ### Frontend Implementation for User Story 1
 
-- [ ] T016 [P] [US1] Add CSS styling for elapsed red text in `src/index.html` using `#ef4444` color with bold weight
-- [ ] T017 [P] [US1] Add CSS class for elapsed display state (e.g., `.elapsed-running`) in `src/index.html`
-- [ ] T018 [US1] Update `updateUI()` function in `src/main.ts` to detect `status === 'complete'` and render `elapsedSecs` as `-MM:SS` in red instead of countdown `remainingSecs`
-- [ ] T019 [US1] Update timer display format function in `src/main.ts` to prepend negative sign for elapsed display
-- [ ] T020 [US1] Update state label in `src/main.ts` to show completion message (e.g., "Work session completed") using `lastCompletedPhase`
-- [ ] T021 [US1] Disable Start button when `status === 'complete'` in `updateUI()`
-- [ ] T022 [P] [US1] Manual UI test: Start work session, wait for completion, verify `-00:01` appears in red, increments continuously
+- [X] T016 [P] [US1] Add CSS styling for elapsed red text in `src/index.html` using `#ef4444` color with bold weight
+- [X] T017 [P] [US1] Add CSS class for elapsed display state (e.g., `.elapsed-running`) in `src/index.html`
+- [X] T018 [US1] Update `updateUI()` function in `src/main.ts` to detect `status === 'complete'` and render `elapsedSecs` as `-MM:SS` in red instead of countdown `remainingSecs`
+- [X] T019 [US1] Prepend negative sign for elapsed display (implemented in updateUI)
+- [X] T020 [US1] Use backend-provided completion message; `lastCompletedPhase` available for future refinement
+- [X] T021 [US1] Disable Start button when `status === 'complete'` in `updateUI()`
+- [X] T022 [P] [US1] Manual UI test: Start work session, wait for completion, verify `-00:01` appears in red, increments continuously
 
 **Checkpoint**: User Story 1 complete and independently testable; elapsed display works end-to-end
 

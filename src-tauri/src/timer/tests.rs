@@ -372,6 +372,56 @@ fn test_work_completion_transitions_to_break_ready() {
 }
 
 #[test]
+fn test_elapsed_present_and_running_after_completion() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Simulate work completion
+    complete_work_session(&mut service);
+    let state = service.get_state();
+
+    assert_eq!(state.status, Status::Complete);
+    assert!(state.elapsed_secs.is_some());
+    assert!(state.elapsed_running);
+    assert_eq!(state.last_completed_phase, Some(Phase::Work));
+}
+
+#[test]
+fn test_elapsed_increments_monotonically() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session
+    complete_work_session(&mut service);
+
+    // Initial elapsed
+    let s1 = service.get_state();
+    let t1 = s1.elapsed_secs.unwrap();
+
+    // Wait ~1 second and check increment
+    sleep(Duration::from_millis(1050));
+    let s2 = service.get_state();
+    let t2 = s2.elapsed_secs.unwrap();
+
+    assert!(t2 >= t1 + 1);
+}
+
+#[test]
+fn test_elapsed_caps_at_99_59() {
+    let mut service = TimerService::new();
+    // Enter complete state directly
+    service.phase = Phase::Work;
+    service.handle_completion();
+    // Simulate a very large paused elapsed
+    service.elapsed_paused_secs = 7000;
+    service.elapsed_started_instant = Some(Instant::now());
+    service.elapsed_running = true;
+
+    let state = service.get_state();
+    assert_eq!(state.elapsed_secs, Some(5999));
+}
+
+#[test]
 fn test_completion_flag_set_on_work_completion() {
     let mut service = TimerService::new();
     service.start().unwrap();

@@ -7,6 +7,9 @@ interface TimerState {
   durationSecs: number;
   completionFlag: boolean;
   stateLabel: string;
+  elapsedSecs?: number;
+  elapsedRunning: boolean;
+  lastCompletedPhase?: 'work' | 'break';
 }
 
 const CHIME_DURATION_SEC = 3.0;
@@ -28,11 +31,12 @@ let confirmClearBtn: HTMLButtonElement;
 let cancelClearBtn: HTMLButtonElement;
 
 function shouldConfirmClear(state: TimerState): boolean {
-  // Confirm if timer is running or paused, OR if in Ready state with paused time
+  // Confirm if timer is running or paused, OR if in Ready state with paused time, OR in complete state
   const hasActivity = state.status === 'running' || state.status === 'paused';
   const hasPausedTime = (state.status === 'workReady' || state.status === 'breakReady')
     && state.remainingSecs !== state.durationSecs;
-  return hasActivity || hasPausedTime;
+  const isComplete = state.status === 'complete';
+  return hasActivity || hasPausedTime || isComplete;
 }
 
 function showClearConfirmDialog() {
@@ -87,7 +91,21 @@ async function updateUI() {
   try {
     const state = await invoke<TimerState>('get_state');
 
-    timerDisplay.textContent = formatTime(state.remainingSecs);
+    // Render timer display: show negative elapsed when complete
+    if (state.status === 'complete' && typeof state.elapsedSecs === 'number') {
+      timerDisplay.textContent = `-${formatTime(state.elapsedSecs)}`;
+      timerDisplay.classList.add('elapsed');
+      if (state.elapsedRunning) {
+        timerDisplay.classList.add('elapsed-running');
+      } else {
+        timerDisplay.classList.remove('elapsed-running');
+      }
+    } else {
+      timerDisplay.textContent = formatTime(state.remainingSecs);
+      timerDisplay.classList.remove('elapsed');
+      timerDisplay.classList.remove('elapsed-running');
+    }
+
     stateLabel.textContent = state.stateLabel;
 
     // Sync active mode button with backend phase
@@ -99,8 +117,11 @@ async function updateUI() {
       workBtn.classList.remove('active');
     }
 
-    // Update button states - Start enabled when in Ready states
+    // Update button states - Start disabled when complete, enabled only in Ready states
     startBtn.disabled = !(state.status === 'workReady' || state.status === 'breakReady');
+    if (state.status === 'complete') {
+      startBtn.disabled = true;
+    }
     pauseBtn.disabled = state.status !== 'running';
     resumeBtn.disabled = state.status !== 'paused';
     // Clear enabled unless in fresh Ready state (remaining time = full duration)

@@ -85,11 +85,12 @@ impl TimerService {
             } else {
                 0
             };
-            (
-                Some(base + running_add),
-                self.elapsed_running,
-                self.last_completed_phase,
-            )
+            // Cap elapsed display at 99:59 (5999 seconds)
+            let mut total = base.saturating_add(running_add);
+            if total > 5999 {
+                total = 5999;
+            }
+            (Some(total), self.elapsed_running, self.last_completed_phase)
         } else {
             (None, false, None)
         };
