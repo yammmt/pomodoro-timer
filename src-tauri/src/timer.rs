@@ -30,11 +30,12 @@ pub struct TimerState {
     pub remaining_secs: u32,
     pub duration_secs: u32,
     pub completion_flag: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub started_at: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub paused_at: Option<String>,
     pub state_label: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub elapsed_secs: Option<u32>,
+    pub elapsed_running: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_completed_phase: Option<Phase>,
 }
 
 pub struct TimerService {
@@ -47,6 +48,11 @@ pub struct TimerService {
     pub(crate) paused_work_secs: Option<u32>,
     pub(crate) paused_break_secs: Option<u32>,
     state_label: String,
+    // Elapsed tracking after completion
+    pub(crate) last_completed_phase: Option<Phase>,
+    pub(crate) elapsed_started_instant: Option<Instant>,
+    pub(crate) elapsed_paused_secs: u32,
+    pub(crate) elapsed_running: bool,
 }
 
 impl TimerService {
@@ -61,20 +67,42 @@ impl TimerService {
             paused_work_secs: None,
             paused_break_secs: None,
             state_label: "Ready to work".to_string(),
+            last_completed_phase: None,
+            elapsed_started_instant: None,
+            elapsed_paused_secs: 0,
+            elapsed_running: false,
         }
     }
 
     pub fn get_state(&mut self) -> TimerState {
         self.update_remaining();
+        // Compute elapsed seconds when in Complete state
+        let (elapsed_opt, elapsed_running_flag, last_phase_opt) = if self.status == Status::Complete
+        {
+            let base = self.elapsed_paused_secs;
+            let running_add = if let Some(t0) = self.elapsed_started_instant {
+                Instant::now().duration_since(t0).as_secs() as u32
+            } else {
+                0
+            };
+            (
+                Some(base + running_add),
+                self.elapsed_running,
+                self.last_completed_phase,
+            )
+        } else {
+            (None, false, None)
+        };
         TimerState {
             phase: self.phase,
             status: self.status,
             remaining_secs: self.remaining_secs,
             duration_secs: self.duration_secs,
             completion_flag: self.completion_flag,
-            started_at: None,
-            paused_at: None,
             state_label: self.state_label.clone(),
+            elapsed_secs: elapsed_opt,
+            elapsed_running: elapsed_running_flag,
+            last_completed_phase: last_phase_opt,
         }
     }
 
@@ -98,36 +126,39 @@ impl TimerService {
     }
 
     pub(crate) fn handle_completion(&mut self) {
+        // Record completion and start elapsed clock
         self.completion_flag = true;
-        match self.phase {
+        let completed = self.phase;
+        self.last_completed_phase = Some(completed);
+
+        // Set completion message but DON'T advance to next phase yet
+        // Phase will advance only when user calls clear()
+        match completed {
             Phase::Work => {
-                // Transition to break ready (don't auto-start)
-                self.phase = Phase::Break;
-                self.status = Status::BreakReady;
-                self.duration_secs = BREAK_DURATION_SECS;
-                self.remaining_secs = BREAK_DURATION_SECS;
-                self.state_label = "Break ready - press Start".to_string();
-                self.started_instant = None;
-                self.paused_work_secs = None;
-                self.paused_break_secs = None;
+                self.state_label = "Work session completed".to_string();
             }
             Phase::Break => {
-                // Transition to work ready (don't auto-start)
-                self.phase = Phase::Work;
-                self.status = Status::WorkReady;
-                self.duration_secs = WORK_DURATION_SECS;
-                self.remaining_secs = WORK_DURATION_SECS;
-                self.state_label = "Work ready - press Start".to_string();
-                self.started_instant = None;
-                self.paused_work_secs = None;
-                self.paused_break_secs = None;
+                self.state_label = "Break session completed".to_string();
             }
         }
+
+        // Enter Complete status and start elapsed clock
+        self.status = Status::Complete;
+        self.started_instant = None;
+        self.paused_work_secs = None;
+        self.paused_break_secs = None;
+        self.elapsed_paused_secs = 0;
+        self.elapsed_started_instant = Some(Instant::now());
+        self.elapsed_running = true;
     }
 
     pub fn start(&mut self) -> Result<TimerState, String> {
         if self.status == Status::Running {
             return Err("Timer already running".to_string());
+        }
+
+        if self.status == Status::Complete {
+            return Err("Timer completed; clear elapsed time before starting".to_string());
         }
 
         // Phase-aware start: start work or break based on current status
@@ -208,15 +239,58 @@ impl TimerService {
     }
 
     pub fn clear(&mut self) -> Result<TimerState, String> {
-        self.phase = Phase::Work;
-        self.status = Status::WorkReady;
-        self.remaining_secs = WORK_DURATION_SECS;
-        self.duration_secs = WORK_DURATION_SECS;
+        // Reset completion/elapsed tracking
         self.completion_flag = false;
         self.started_instant = None;
+        self.elapsed_started_instant = None;
+        self.elapsed_paused_secs = 0;
+        self.elapsed_running = false;
+        self.last_completed_phase = None;
+
+        // Determine target ready state based on current status/phase
+        if self.status == Status::Complete {
+            // In elapsed mode after completion: advance to NEXT phase ready
+            match self.phase {
+                Phase::Work => {
+                    // Just completed work; advance to break
+                    self.phase = Phase::Break;
+                    self.status = Status::BreakReady;
+                    self.duration_secs = BREAK_DURATION_SECS;
+                    self.remaining_secs = BREAK_DURATION_SECS;
+                    self.state_label = "Ready to break".to_string();
+                }
+                Phase::Break => {
+                    // Just completed break; advance to work
+                    self.phase = Phase::Work;
+                    self.status = Status::WorkReady;
+                    self.duration_secs = WORK_DURATION_SECS;
+                    self.remaining_secs = WORK_DURATION_SECS;
+                    self.state_label = "Ready to work".to_string();
+                }
+            }
+        } else {
+            // Not in elapsed mode: honor legacy behavior – clearing during break skips break
+            match self.phase {
+                Phase::Work => {
+                    // Reset work to ready
+                    self.status = Status::WorkReady;
+                    self.duration_secs = WORK_DURATION_SECS;
+                    self.remaining_secs = WORK_DURATION_SECS;
+                    self.state_label = "Ready to work".to_string();
+                }
+                Phase::Break => {
+                    // Skip break and return to work-ready
+                    self.phase = Phase::Work;
+                    self.status = Status::WorkReady;
+                    self.duration_secs = WORK_DURATION_SECS;
+                    self.remaining_secs = WORK_DURATION_SECS;
+                    self.state_label = "Ready to work".to_string();
+                }
+            }
+        }
+
         self.paused_work_secs = None;
         self.paused_break_secs = None;
-        self.state_label = "Ready to work".to_string();
 
         Ok(self.get_state())
     }

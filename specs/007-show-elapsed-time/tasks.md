@@ -29,14 +29,14 @@
 
 **⚠️ CRITICAL**: No UI work can begin until this phase is complete
 
-- [ ] T004 Extend `TimerService` struct in `src-tauri/src/timer.rs` with elapsed tracking fields: `last_completed_phase: Option<Phase>`, `elapsed_started_instant: Option<Instant>`, `elapsed_paused_secs: u32`, `elapsed_running: bool`
-- [ ] T005 Update `TimerService::new()` constructor to initialize elapsed fields to default/None values
-- [ ] T006 Modify `handle_completion()` in `src-tauri/src/timer.rs` to transition to `Status::Complete`, start elapsed clock (`elapsed_running=true`, `elapsed_started_instant=now`), and record `last_completed_phase`
-- [ ] T007 Add elapsed computation logic in `get_state()` to calculate `elapsed_secs` based on elapsed running/paused state
-- [ ] T008 Update `TimerState` struct in `src-tauri/src/timer.rs` with new fields: `elapsedSecs: Option<u32>`, `elapsedRunning: bool`, `lastCompletedPhase: Option<Phase>`
-- [ ] T009 Modify `start()` method to reject calls when `status == Status::Complete` with appropriate error message
-- [ ] T010 Update `clear()` method to reset all elapsed fields when `status == Status::Complete`
-- [ ] T011 Verify Tauri serde serialization exports new fields in IPC responses via `get_state` command
+- [X] T004 Extend `TimerService` struct in `src-tauri/src/timer.rs` with elapsed tracking fields: `last_completed_phase: Option<Phase>`, `elapsed_started_instant: Option<Instant>`, `elapsed_paused_secs: u32`, `elapsed_running: bool`
+- [X] T005 Update `TimerService::new()` constructor to initialize elapsed fields to default/None values
+- [X] T006 Modify `handle_completion()` in `src-tauri/src/timer.rs` to transition to `Status::Complete`, start elapsed clock (`elapsed_running=true`, `elapsed_started_instant=now`), and record `last_completed_phase`
+- [X] T007 Add elapsed computation logic in `get_state()` to calculate `elapsed_secs` based on elapsed running/paused state
+- [X] T008 Update `TimerState` struct in `src-tauri/src/timer.rs` with new fields: `elapsedSecs: Option<u32>`, `elapsedRunning: bool`, `lastCompletedPhase: Option<Phase>`
+- [X] T009 Modify `start()` method to reject calls when `status == Status::Complete` with appropriate error message
+- [X] T010 Update `clear()` method to reset all elapsed fields when `status == Status::Complete`
+- [X] T011 Verify Tauri serde serialization exports new fields in IPC responses via `get_state` command
 
 **Checkpoint**: Backend elapsed time infrastructure complete; ready for user story implementations
 
