@@ -17,9 +17,9 @@
 
 **Purpose**: Prepare backend and frontend foundation for elapsed time feature
 
-- [ ] T001 Create feature branch and verify project structure (already on `007-show-elapsed-time`)
-- [ ] T002 Review existing timer state and IPC commands in `src-tauri/src/timer.rs` and `src-tauri/src/lib.rs`
-- [ ] T003 Verify test framework (`cargo test`) is working and understand existing timer tests in `src-tauri/src/timer/tests.rs`
+- [X] T001 Create feature branch and verify project structure (already on `007-show-elapsed-time`)
+- [X] T002 Review existing timer state and IPC commands in `src-tauri/src/timer.rs` and `src-tauri/src/lib.rs`
+- [X] T003 Verify test framework (`cargo test`) is working and understand existing timer tests in `src-tauri/src/timer/tests.rs`
 
 ---
 
