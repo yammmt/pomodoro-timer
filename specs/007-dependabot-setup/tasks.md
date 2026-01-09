@@ -27,7 +27,7 @@ description: "Task list for enabling GitHub Dependabot"
 
 **Purpose**: Ensure required directory structure exists
 
-- [ ] T001 Verify `.github/` directory exists at repository root, create if missing
+- [X] T001 Verify `.github/` directory exists at repository root, create if missing
 
 ---
 
@@ -37,9 +37,9 @@ description: "Task list for enabling GitHub Dependabot"
 
 **⚠️ CRITICAL**: Verify existing project structure before proceeding
 
-- [ ] T002 Verify `package.json` exists at repository root (for npm ecosystem)
-- [ ] T003 Verify `Cargo.toml` exists at `/src-tauri/` (for Cargo ecosystem)
-- [ ] T004 Verify GitHub Actions CI workflow exists (from spec 002-github-actions-ci)
+- [X] T002 Verify `package.json` exists at repository root (for npm ecosystem)
+- [X] T003 Verify `Cargo.toml` exists at `/src-tauri/` (for Cargo ecosystem)
+- [X] T004 Verify GitHub Actions CI workflow exists (from spec 002-github-actions-ci)
 
 **Checkpoint**: Prerequisites verified - user story implementation can begin
 
@@ -53,20 +53,20 @@ description: "Task list for enabling GitHub Dependabot"
 
 ### Implementation for User Story 1
 
-- [ ] T005 [US1] Create `.github/dependabot.yml` configuration file at repository root
-- [ ] T006 [US1] Add schema version (`version: 2`) to `.github/dependabot.yml`
-- [ ] T007 [US1] Configure npm ecosystem in `.github/dependabot.yml`:
+- [X] T005 [US1] Create `.github/dependabot.yml` configuration file at repository root
+- [X] T006 [US1] Add schema version (`version: 2`) to `.github/dependabot.yml`
+- [X] T007 [US1] Configure npm ecosystem in `.github/dependabot.yml`:
   - Set `package-ecosystem: "npm"`
   - Set `directory: "/"`
   - Configure `schedule` with `interval: "weekly"` and `day: "monday"`
   - Set `open-pull-requests-limit: 10`
-- [ ] T008 [US1] Configure Cargo ecosystem in `.github/dependabot.yml`:
+- [X] T008 [US1] Configure Cargo ecosystem in `.github/dependabot.yml`:
   - Set `package-ecosystem: "cargo"`
   - Set `directory: "/src-tauri"`
   - Configure `schedule` with `interval: "weekly"` and `day: "monday"`
   - Set `open-pull-requests-limit: 10`
-- [ ] T009 [US1] Validate YAML syntax in `.github/dependabot.yml`
-- [ ] T010 [US1] Commit configuration file with message: "feat: enable GitHub Dependabot for npm and cargo"
+- [X] T009 [US1] Validate YAML syntax in `.github/dependabot.yml`
+- [X] T010 [US1] Commit configuration file with message: "ci: enable GitHub Dependabot for npm and cargo"
 
 **Verification Steps for User Story 1**:
 
