@@ -91,12 +91,12 @@ description: "Task list for enabling GitHub Dependabot"
 
 ### Implementation for User Story 2
 
-- [ ] T011 [US2] Add dependency grouping configuration for npm in `.github/dependabot.yml`:
+- [X] T011 [US2] Add dependency grouping configuration for npm in `.github/dependabot.yml`:
   - Create `groups` section under npm ecosystem
   - Configure `development-dependencies` group with `dependency-type: "development"`
   - Configure `production-dependencies` group with `dependency-type: "production"`
-- [ ] T012 [US2] Validate YAML syntax after adding groups configuration
-- [ ] T013 [US2] Commit updated configuration with message: "feat: add dependency grouping for npm updates"
+- [X] T012 [US2] Validate YAML syntax after adding groups configuration
+- [X] T013 [US2] Commit updated configuration with message: "ci: add dependency grouping for npm updates"
 
 **Verification Steps for User Story 2**:
 
