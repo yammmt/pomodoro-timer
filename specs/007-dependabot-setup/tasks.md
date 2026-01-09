@@ -59,11 +59,13 @@ description: "Task list for enabling GitHub Dependabot"
   - Set `package-ecosystem: "npm"`
   - Set `directory: "/"`
   - Configure `schedule` with `interval: "weekly"` and `day: "monday"`
+  - Set `versioning-strategy: increase`
   - Set `open-pull-requests-limit: 10`
 - [X] T008 [US1] Configure Cargo ecosystem in `.github/dependabot.yml`:
   - Set `package-ecosystem: "cargo"`
   - Set `directory: "/src-tauri"`
   - Configure `schedule` with `interval: "weekly"` and `day: "monday"`
+  - Set `versioning-strategy: increase`
   - Set `open-pull-requests-limit: 10`
 - [X] T009 [US1] Validate YAML syntax in `.github/dependabot.yml`
 - [X] T010 [US1] Commit configuration file with message: "ci: enable GitHub Dependabot for npm and cargo"

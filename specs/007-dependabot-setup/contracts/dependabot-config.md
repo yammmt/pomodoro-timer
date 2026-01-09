@@ -24,6 +24,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    versioning-strategy: increase
     groups:
       development-dependencies:
         dependency-type: "development"
@@ -37,6 +38,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    versioning-strategy: increase
     open-pull-requests-limit: 10
 ```
 
@@ -58,6 +60,7 @@ updates:
 | `schedule` | object | Yes | Update check schedule | See schedule spec |
 | `schedule.interval` | string | Yes | Check frequency | `"weekly"` |
 | `schedule.day` | string | No | Day for weekly checks | `"monday"` |
+| `versioning-strategy` | string | No | How versions are proposed | `"increase"` |
 | `groups` | object | No | Dependency grouping rules | See grouping spec |
 | `open-pull-requests-limit` | number | No | Max concurrent PRs | `10` (default: 5) |
 

@@ -29,6 +29,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    versioning-strategy: increase
     groups:
       development-dependencies:
         dependency-type: "development"
@@ -42,6 +43,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    versioning-strategy: increase
     open-pull-requests-limit: 10
 ```
 

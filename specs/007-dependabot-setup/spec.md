@@ -66,6 +66,7 @@ As a project maintainer, I want to configure Dependabot's update frequency and b
 - **FR-008**: System MUST allow configuration of update frequency (daily, weekly, monthly)
 - **FR-009**: System MUST allow configuration of which dependency groups to monitor (dependencies, devDependencies, etc.)
 - **FR-010**: System MUST close outdated pull requests when newer updates are available
+- **FR-011**: System MUST set `versioning-strategy: increase` for npm and Cargo ecosystems so manifest versions can advance when required
 
 ### Key Entities
 
