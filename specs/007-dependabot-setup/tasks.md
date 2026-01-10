@@ -49,7 +49,7 @@ description: "Task list for enabling GitHub Dependabot"
 
 **Goal**: Enable Dependabot to automatically monitor and create PRs for npm and Cargo dependency updates
 
-**Independent Test**: After merging to main, verify Dependabot appears in repository Insights → Dependency graph → Dependabot tab, and creates update PRs within 24 hours if outdated dependencies exist
+**Independent Test**: After merging to main, verify Dependabot appears in repository Insights → Dependency graph → Dependabot tab, and typically creates update PRs within 24 hours if outdated dependencies exist
 
 ### Implementation for User Story 1
 
@@ -76,7 +76,7 @@ description: "Task list for enabling GitHub Dependabot"
 2. Create pull request to main branch
 3. After merge, navigate to repository Insights → Dependency graph → Dependabot
 4. Verify both npm and cargo ecosystems are listed
-5. Wait for first scheduled check or manually trigger via GitHub UI
+5. Wait for first scheduled check (typically within 24 hours) or manually trigger via GitHub UI
 6. Verify Dependabot creates PRs if outdated dependencies exist
 7. Verify PRs include version changes, changelogs, and compatibility notes
 8. Verify PRs trigger existing CI/CD workflows

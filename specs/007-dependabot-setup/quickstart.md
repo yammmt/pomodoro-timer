@@ -77,19 +77,19 @@ After merging:
 
 ## What Happens Next
 
-### Immediate (within 1 hour)
+### Immediate (typically within 1 hour)
 
 - GitHub validates the configuration file
 - Dependabot appears in the Dependency graph tab
 - Initial dependency scan begins
 
-### Within 24 hours
+### Within 24 hours (typically)
 
 - Dependabot completes first update check
 - Creates PRs for any outdated dependencies (if found)
 - PRs trigger existing CI/CD workflows
 
-### Weekly (every Monday)
+### Scheduled check (typically every Monday)
 
 - Dependabot runs scheduled update check
 - Creates grouped PRs for development and production dependencies

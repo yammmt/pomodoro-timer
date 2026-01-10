@@ -176,6 +176,6 @@ updated-dependencies:
 
 1. Configuration file passes GitHub's validation
 2. Both npm and cargo ecosystems are monitored
-3. First update PRs created within 24 hours of enabling (if updates available)
-4. PRs include complete metadata (versions, changelogs, compatibility)
-5. Existing CI/CD validates all Dependabot PRs automatically
+3. First update PRs created (typically within 24 hours of enabling, if updates available)
+4. Existing CI/CD validates all Dependabot PRs automatically
+5. Dependabot's default PR formatting and content applied to all updates
