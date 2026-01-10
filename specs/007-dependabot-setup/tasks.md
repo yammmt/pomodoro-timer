@@ -13,6 +13,8 @@ description: "Task list for enabling GitHub Dependabot"
 
 ## Format: `[ID] [P?] [Story] Description`
 
+- Checklist format when task lists are created: `- [ ] [ID] [Labels] Description with file path`
+- Labels are optional; include them only when applicable
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (US1, US2)
 - Include exact file paths in descriptions
@@ -244,7 +246,8 @@ Complete all phases before shipping if:
 
 ## Format Validation
 
-✅ All tasks follow checklist format: `- [ ] [ID] [Labels] Description with file path`
+✅ All tasks follow checklist format when created: `- [ ] [ID] [Labels] Description with file path`; completed tasks may be marked `[X]`
+✅ Labels are optional and used only when applicable
 ✅ Task IDs sequential (T001-T016)
 ✅ User story labels present for story phases ([US1], [US2])
 ✅ File paths specified where applicable (`.github/dependabot.yml`)
