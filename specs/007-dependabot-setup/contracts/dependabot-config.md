@@ -111,14 +111,9 @@ updates:
 
 ### Pull Request Metadata
 
-- **Title Format**: "Bump {package} from {old-version} to {new-version}"
-- **Labels**: `dependencies`, ecosystem-specific labels, `security` if applicable
-- **Body Content**:
-  - Release notes
-  - Changelog
-
-  - Commits between versions
-  - Compatibility score
+- **Title Format**: Generated automatically by Dependabot
+- **Labels**: Automatically applied by Dependabot (`dependencies`, ecosystem-specific labels, `security` if applicable)
+- **Body Content**: Handled by Dependabot's default behavior (release notes, changelogs, compatibility information)
 
 ## Validation Rules
 
