@@ -58,13 +58,13 @@ This is a single project with Rust backend:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before further implementation**
 
-- [ ] T005 [P] [US1] Add test_work_completion_stays_in_work_mode in src-tauri/src/timer/tests.rs
-- [ ] T006 [P] [US1] Add test_start_after_work_completion_restarts_work in src-tauri/src/timer/tests.rs
+- [X] T005 [P] [US1] Add test_work_completion_stays_in_work_mode in src-tauri/src/timer/tests.rs
+- [X] T006 [P] [US1] Add test_start_after_work_completion_restarts_work in src-tauri/src/timer/tests.rs
 
 ### Implementation for User Story 1 & 2
 
-- [ ] T007 [US1+US2] Modify start() method in src-tauri/src/timer.rs to handle Status::Complete with phase-aware restart for both work and break phases
-- [ ] T008 [US1] Run cargo test to verify work completion tests pass
+- [X] T007 [US1+US2] Modify start() method in src-tauri/src/timer.rs to handle Status::Complete with phase-aware restart for both work and break phases
+- [X] T008 [US1] Run cargo test to verify work completion tests pass
 
 **Checkpoint**: At this point, work session completion behavior is fully functional and independently testable
 

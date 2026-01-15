@@ -120,7 +120,7 @@ impl TimerService {
 
         // Phase-aware start: start work or break based on current status
         match self.status {
-            Status::WorkReady | Status::Complete => {
+            Status::WorkReady => {
                 // Start work session
                 self.phase = Phase::Work;
                 self.status = Status::Running;
@@ -131,6 +131,29 @@ impl TimerService {
                 self.started_instant = Some(Instant::now());
                 self.paused_work_secs = None;
                 // Preserve paused_break_secs for switching back to break later
+            }
+            Status::Complete => {
+                // Restart the current phase (stay in work or break)
+                match self.phase {
+                    Phase::Work => {
+                        self.status = Status::Running;
+                        self.duration_secs = WORK_DURATION_SECS;
+                        self.remaining_secs = WORK_DURATION_SECS;
+                        self.completion_flag = false;
+                        self.state_label = "Working".to_string();
+                        self.started_instant = Some(Instant::now());
+                        self.paused_work_secs = None;
+                    }
+                    Phase::Break => {
+                        self.status = Status::Running;
+                        self.duration_secs = BREAK_DURATION_SECS;
+                        self.remaining_secs = BREAK_DURATION_SECS;
+                        self.completion_flag = false;
+                        self.state_label = "Break time".to_string();
+                        self.started_instant = Some(Instant::now());
+                        self.paused_break_secs = None;
+                    }
+                }
             }
             Status::BreakReady => {
                 // Start break session
