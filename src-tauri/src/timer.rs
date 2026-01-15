@@ -99,30 +99,18 @@ impl TimerService {
 
     pub(crate) fn handle_completion(&mut self) {
         self.completion_flag = true;
-        match self.phase {
-            Phase::Work => {
-                // Transition to break ready (don't auto-start)
-                self.phase = Phase::Break;
-                self.status = Status::BreakReady;
-                self.duration_secs = BREAK_DURATION_SECS;
-                self.remaining_secs = BREAK_DURATION_SECS;
-                self.state_label = "Break ready - press Start".to_string();
-                self.started_instant = None;
-                self.paused_work_secs = None;
-                self.paused_break_secs = None;
-            }
-            Phase::Break => {
-                // Transition to work ready (don't auto-start)
-                self.phase = Phase::Work;
-                self.status = Status::WorkReady;
-                self.duration_secs = WORK_DURATION_SECS;
-                self.remaining_secs = WORK_DURATION_SECS;
-                self.state_label = "Work ready - press Start".to_string();
-                self.started_instant = None;
-                self.paused_work_secs = None;
-                self.paused_break_secs = None;
-            }
-        }
+        self.remaining_secs = 0;
+        self.status = Status::Complete;
+        self.started_instant = None;
+
+        // Stay in current phase, update label
+        self.state_label = match self.phase {
+            Phase::Work => "Work completed".to_string(),
+            Phase::Break => "Break completed".to_string(),
+        };
+
+        // Note: Do NOT clear paused_work_secs or paused_break_secs
+        // Note: Do NOT change self.phase or self.duration_secs
     }
 
     pub fn start(&mut self) -> Result<TimerState, String> {
