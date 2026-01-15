@@ -219,15 +219,26 @@ impl TimerService {
     }
 
     pub fn clear(&mut self) -> Result<TimerState, String> {
-        self.phase = Phase::Work;
-        self.status = Status::WorkReady;
-        self.remaining_secs = WORK_DURATION_SECS;
-        self.duration_secs = WORK_DURATION_SECS;
+        // Preserve current phase, reset to ready state
+        match self.phase {
+            Phase::Work => {
+                self.status = Status::WorkReady;
+                self.remaining_secs = WORK_DURATION_SECS;
+                self.duration_secs = WORK_DURATION_SECS;
+                self.state_label = "Ready to work".to_string();
+            }
+            Phase::Break => {
+                self.status = Status::BreakReady;
+                self.remaining_secs = BREAK_DURATION_SECS;
+                self.duration_secs = BREAK_DURATION_SECS;
+                self.state_label = "Ready to break".to_string();
+            }
+        }
+
         self.completion_flag = false;
         self.started_instant = None;
         self.paused_work_secs = None;
         self.paused_break_secs = None;
-        self.state_label = "Ready to work".to_string();
 
         Ok(self.get_state())
     }
@@ -253,6 +264,10 @@ impl TimerService {
                 Phase::Work => self.paused_work_secs = Some(self.remaining_secs),
                 Phase::Break => self.paused_break_secs = Some(self.remaining_secs),
             }
+        } else if self.status == Status::Complete {
+            // Session completed; switching phase clears completion state
+            // No need to save remaining time (already 0)
+            // Completion flag will be cleared below
         }
 
         // Switch to new phase

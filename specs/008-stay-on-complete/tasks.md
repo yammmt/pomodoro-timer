@@ -97,15 +97,15 @@ This is a single project with Rust backend:
 
 ### Tests for User Story 3
 
-- [ ] T012 [P] [US3] Add test_phase_switch_from_complete_status in src-tauri/src/timer/tests.rs
-- [ ] T013 [P] [US3] Add test_same_phase_switch_after_complete_resets in src-tauri/src/timer/tests.rs
-- [ ] T014 [P] [US3] Add test_clear_preserves_current_phase in src-tauri/src/timer/tests.rs
+- [X] T012 [P] [US3] Add test_phase_switch_from_complete_status in src-tauri/src/timer/tests.rs
+- [X] T013 [P] [US3] Add test_same_phase_switch_after_complete_resets in src-tauri/src/timer/tests.rs
+- [X] T014 [P] [US3] Add test_clear_preserves_current_phase in src-tauri/src/timer/tests.rs
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Modify clear() method in src-tauri/src/timer.rs to preserve current phase when resetting
-- [ ] T016 [US3] Modify set_phase() method in src-tauri/src/timer.rs to handle Status::Complete transitions
-- [ ] T017 [US3] Run cargo test to verify all manual transition tests pass
+- [X] T015 [US3] Modify clear() method in src-tauri/src/timer.rs to preserve current phase when resetting
+- [X] T016 [US3] Modify set_phase() method in src-tauri/src/timer.rs to handle Status::Complete transitions
+- [X] T017 [US3] Run cargo test to verify all manual transition tests pass
 
 **Checkpoint**: At this point, manual session control after completion is fully functional and independently testable
 
