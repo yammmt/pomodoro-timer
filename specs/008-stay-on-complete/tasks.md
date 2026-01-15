@@ -30,9 +30,9 @@ This is a single project with Rust backend:
 
 **Purpose**: Verify existing infrastructure is ready
 
-- [ ] T001 [P] Verify current timer.rs implementation has required methods: handle_completion(), start(), clear(), set_phase()
-- [ ] T002 [P] Verify Status::Complete enum value exists in src-tauri/src/timer.rs
-- [ ] T003 [P] Verify test infrastructure is working by running existing tests with `cargo test`
+- [X] T001 [P] Verify current timer.rs implementation has required methods: handle_completion(), start(), clear(), set_phase()
+- [X] T002 [P] Verify Status::Complete enum value exists in src-tauri/src/timer.rs
+- [X] T003 [P] Verify test infrastructure is working by running existing tests with `cargo test`
 
 ---
 
