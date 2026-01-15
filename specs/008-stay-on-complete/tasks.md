@@ -78,12 +78,12 @@ This is a single project with Rust backend:
 
 ### Tests for User Story 2
 
-- [ ] T009 [P] [US2] Add test_break_completion_stays_in_break_mode in src-tauri/src/timer/tests.rs
-- [ ] T010 [P] [US2] Add test_start_after_break_completion_restarts_break in src-tauri/src/timer/tests.rs
+- [X] T009 [P] [US2] Add test_break_completion_stays_in_break_mode in src-tauri/src/timer/tests.rs
+- [X] T010 [P] [US2] Add test_start_after_break_completion_restarts_break in src-tauri/src/timer/tests.rs
 
 ### Implementation for User Story 2
 
-- [ ] T011 [US2] Run cargo test to verify break completion tests pass
+- [X] T011 [US2] Run cargo test to verify break completion tests pass
 
 **Checkpoint**: At this point, break session completion behavior is fully functional and independently testable
 

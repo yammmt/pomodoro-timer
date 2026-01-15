@@ -360,6 +360,54 @@ fn test_completion_flag_set_on_work_completion() {
     assert!(service.completion_flag);
 }
 
+// ===== User Story 2: Break completion stays in break mode =====
+
+#[test]
+fn test_break_completion_stays_in_break_mode() {
+    let mut service = TimerService::new();
+
+    // Switch to break phase and start
+    service.set_phase(Phase::Break);
+    service.start().unwrap();
+
+    // Simulate completion of break session
+    service.duration_secs = BREAK_DURATION_SECS;
+    service.started_instant =
+        Some(Instant::now() - Duration::from_secs(BREAK_DURATION_SECS as u64 + 1));
+    service.update_remaining();
+
+    let state = service.get_state();
+    assert_eq!(state.phase, Phase::Break);
+    assert_eq!(state.status, Status::Complete);
+    assert_eq!(state.remaining_secs, 0);
+    assert!(state.completion_flag);
+    assert_eq!(state.state_label, "Break completed");
+}
+
+#[test]
+fn test_start_after_break_completion_restarts_break() {
+    let mut service = TimerService::new();
+
+    // Switch to break phase and start
+    service.set_phase(Phase::Break);
+    service.start().unwrap();
+
+    // Simulate completion of break session
+    service.duration_secs = BREAK_DURATION_SECS;
+    service.started_instant =
+        Some(Instant::now() - Duration::from_secs(BREAK_DURATION_SECS as u64 + 1));
+    service.update_remaining();
+
+    // Start should restart break session from Complete status
+    service.start().unwrap();
+    let state = service.get_state();
+    assert_eq!(state.phase, Phase::Break);
+    assert_eq!(state.status, Status::Running);
+    assert_eq!(state.remaining_secs, BREAK_DURATION_SECS);
+    assert!(!state.completion_flag);
+    assert_eq!(state.state_label, "Break time");
+}
+
 // ===== User Story 2: Pause/resume break sessions =====
 
 #[test]
