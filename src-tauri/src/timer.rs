@@ -99,30 +99,18 @@ impl TimerService {
 
     pub(crate) fn handle_completion(&mut self) {
         self.completion_flag = true;
-        match self.phase {
-            Phase::Work => {
-                // Transition to break ready (don't auto-start)
-                self.phase = Phase::Break;
-                self.status = Status::BreakReady;
-                self.duration_secs = BREAK_DURATION_SECS;
-                self.remaining_secs = BREAK_DURATION_SECS;
-                self.state_label = "Break ready - press Start".to_string();
-                self.started_instant = None;
-                self.paused_work_secs = None;
-                self.paused_break_secs = None;
-            }
-            Phase::Break => {
-                // Transition to work ready (don't auto-start)
-                self.phase = Phase::Work;
-                self.status = Status::WorkReady;
-                self.duration_secs = WORK_DURATION_SECS;
-                self.remaining_secs = WORK_DURATION_SECS;
-                self.state_label = "Work ready - press Start".to_string();
-                self.started_instant = None;
-                self.paused_work_secs = None;
-                self.paused_break_secs = None;
-            }
-        }
+        self.remaining_secs = 0;
+        self.status = Status::Complete;
+        self.started_instant = None;
+
+        // Stay in current phase, update label
+        self.state_label = match self.phase {
+            Phase::Work => "Work completed".to_string(),
+            Phase::Break => "Break completed".to_string(),
+        };
+
+        // Note: Do NOT clear paused_work_secs or paused_break_secs
+        // Note: Do NOT change self.phase or self.duration_secs
     }
 
     pub fn start(&mut self) -> Result<TimerState, String> {
@@ -132,7 +120,7 @@ impl TimerService {
 
         // Phase-aware start: start work or break based on current status
         match self.status {
-            Status::WorkReady | Status::Complete => {
+            Status::WorkReady => {
                 // Start work session
                 self.phase = Phase::Work;
                 self.status = Status::Running;
@@ -143,6 +131,29 @@ impl TimerService {
                 self.started_instant = Some(Instant::now());
                 self.paused_work_secs = None;
                 // Preserve paused_break_secs for switching back to break later
+            }
+            Status::Complete => {
+                // Restart the current phase (stay in work or break)
+                match self.phase {
+                    Phase::Work => {
+                        self.status = Status::Running;
+                        self.duration_secs = WORK_DURATION_SECS;
+                        self.remaining_secs = WORK_DURATION_SECS;
+                        self.completion_flag = false;
+                        self.state_label = "Working".to_string();
+                        self.started_instant = Some(Instant::now());
+                        self.paused_work_secs = None;
+                    }
+                    Phase::Break => {
+                        self.status = Status::Running;
+                        self.duration_secs = BREAK_DURATION_SECS;
+                        self.remaining_secs = BREAK_DURATION_SECS;
+                        self.completion_flag = false;
+                        self.state_label = "Break time".to_string();
+                        self.started_instant = Some(Instant::now());
+                        self.paused_break_secs = None;
+                    }
+                }
             }
             Status::BreakReady => {
                 // Start break session
@@ -208,15 +219,26 @@ impl TimerService {
     }
 
     pub fn clear(&mut self) -> Result<TimerState, String> {
-        self.phase = Phase::Work;
-        self.status = Status::WorkReady;
-        self.remaining_secs = WORK_DURATION_SECS;
-        self.duration_secs = WORK_DURATION_SECS;
+        // Preserve current phase, reset to ready state
+        match self.phase {
+            Phase::Work => {
+                self.status = Status::WorkReady;
+                self.remaining_secs = WORK_DURATION_SECS;
+                self.duration_secs = WORK_DURATION_SECS;
+                self.state_label = "Ready to work".to_string();
+            }
+            Phase::Break => {
+                self.status = Status::BreakReady;
+                self.remaining_secs = BREAK_DURATION_SECS;
+                self.duration_secs = BREAK_DURATION_SECS;
+                self.state_label = "Ready to break".to_string();
+            }
+        }
+
         self.completion_flag = false;
         self.started_instant = None;
         self.paused_work_secs = None;
         self.paused_break_secs = None;
-        self.state_label = "Ready to work".to_string();
 
         Ok(self.get_state())
     }
@@ -242,6 +264,10 @@ impl TimerService {
                 Phase::Work => self.paused_work_secs = Some(self.remaining_secs),
                 Phase::Break => self.paused_break_secs = Some(self.remaining_secs),
             }
+        } else if self.status == Status::Complete {
+            // Session completed; switching phase clears completion state
+            // No need to save remaining time (already 0)
+            // Completion flag will be cleared below
         }
 
         // Switch to new phase
