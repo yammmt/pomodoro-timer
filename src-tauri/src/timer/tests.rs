@@ -518,6 +518,30 @@ fn test_completion_flag_set_on_completion_after_restart() {
 // ===== Edge Cases =====
 
 #[test]
+fn test_pause_at_one_second_then_complete_stays_in_phase() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Fast forward to 00:01 (1 second remaining)
+    fast_forward(&mut service, WORK_DURATION_SECS as u64 - 1);
+    service.pause().unwrap();
+
+    let paused_state = service.get_state();
+    assert_eq!(paused_state.status, Status::Paused);
+    assert_eq!(paused_state.remaining_secs, 1);
+
+    // Resume and let it complete
+    service.resume().unwrap();
+    fast_forward(&mut service, 2); // Go past completion
+
+    let completed_state = service.get_state();
+    assert_eq!(completed_state.phase, Phase::Work);
+    assert_eq!(completed_state.status, Status::Complete);
+    assert_eq!(completed_state.remaining_secs, 0);
+    assert!(completed_state.completion_flag);
+}
+
+#[test]
 fn test_start_while_running_returns_error() {
     let mut service = TimerService::new();
     service.start().unwrap();

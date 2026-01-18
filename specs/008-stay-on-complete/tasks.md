@@ -115,12 +115,12 @@ This is a single project with Rust backend:
 
 **Purpose**: Final verification and edge case handling
 
-- [ ] T018 Run full test suite with cargo test to verify all 7 new tests plus existing tests pass
-- [ ] T019 Run cargo tauri dev and perform manual testing per quickstart.md verification checklist
-- [ ] T020 [P] Verify completion indication (visual/audible) still triggers at 00:00
-- [ ] T021 [P] Test edge case: pause at 00:01, resume to 00:00, verify stays in current phase
-- [ ] T022 [P] Run cargo fmt to format code according to project standards
-- [ ] T023 [P] Run cargo clippy to check for Rust best practices violations
+- [X] T018 Run full test suite with cargo test to verify all 7 new tests plus existing tests pass
+- [X] T019 Run cargo tauri dev and perform manual testing per quickstart.md verification checklist
+- [X] T020 [P] Verify completion indication (visual/audible) still triggers at 00:00
+- [X] T021 [P] Test edge case: pause at 00:01, resume to 00:00, verify stays in current phase
+- [X] T022 [P] Run cargo fmt to format code according to project standards
+- [X] T023 [P] Run cargo clippy to check for Rust best practices violations
 
 ---
 

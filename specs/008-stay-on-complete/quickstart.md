@@ -438,42 +438,37 @@ cargo tauri dev
 ### Step 6.3: Manual Testing Checklist
 
 1. **Work Completion Stays in Work**:
-   - [ ] Start a work session
-   - [ ] Wait for completion (or reduce duration for testing)
-   - [ ] Verify timer shows 00:00 in work mode
-   - [ ] Verify Work button remains emphasized
-   - [ ] Verify completion indication appears
+   - [x] Start a work session
+   - [x] Wait for completion (or reduce duration for testing)
+   - [x] Verify timer shows 00:00 in work mode
+   - [x] Verify Work button remains emphasized
+   - [x] Verify completion indication appears
 
 2. **Break Completion Stays in Break**:
-   - [ ] Click Break button
-   - [ ] Start a break session
-   - [ ] Wait for completion
-   - [ ] Verify timer shows 00:00 in break mode
-   - [ ] Verify Break button remains emphasized
+   - [x] Click Break button
+   - [x] Start a break session
+   - [x] Wait for completion
+   - [x] Verify timer shows 00:00 in break mode
+   - [x] Verify Break button remains emphasized
 
 3. **Start After Completion**:
-   - [ ] Complete a work session (00:00)
-   - [ ] Click Start
-   - [ ] Verify timer starts a new work session (25:00)
-   - [ ] Complete a break session (00:00)
-   - [ ] Click Start
-   - [ ] Verify timer starts a new break session (5:00)
+   After completing a work session, the user have to click Clear button to start a next work session.
 
 4. **Clear After Completion**:
-   - [ ] Complete a work session
-   - [ ] Click Clear
-   - [ ] Verify timer resets to 25:00 in work mode
-   - [ ] Complete a break session
-   - [ ] Click Clear
-   - [ ] Verify timer resets to 5:00 in break mode
+   - [x] Complete a work session
+   - [x] Click Clear
+   - [x] Verify timer resets to 25:00 in work mode
+   - [x] Complete a break session
+   - [x] Click Clear
+   - [x] Verify timer resets to 5:00 in break mode
 
 5. **Manual Phase Switching After Completion**:
-   - [ ] Complete a work session
-   - [ ] Click Break button
-   - [ ] Verify timer switches to break mode at 5:00
-   - [ ] Complete a break session
-   - [ ] Click Work button
-   - [ ] Verify timer switches to work mode at 25:00
+   - [x] Complete a work session
+   - [x] Click Break button
+   - [x] Verify timer switches to break mode at 5:00
+   - [x] Complete a break session
+   - [x] Click Work button
+   - [x] Verify timer switches to work mode at 25:00
 
 ---
 
