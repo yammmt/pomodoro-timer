@@ -18,9 +18,9 @@
 
 **Purpose**: Prepare for implementation
 
-- [ ] T001 Review existing timer state machine in `src-tauri/src/timer.rs`
-- [ ] T002 [P] Review frontend timer display logic in `src/main.ts`
-- [ ] T003 [P] Verify test framework setup with `cargo test`
+- [X] T001 Review existing timer state machine in `src-tauri/src/timer.rs`
+- [X] T002 [P] Review frontend timer display logic in `src/main.ts`
+- [X] T003 [P] Verify test framework setup with `cargo test`
 
 ---
 
