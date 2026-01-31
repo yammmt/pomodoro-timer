@@ -35,6 +35,8 @@ pub struct TimerState {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub paused_at: Option<String>,
     pub state_label: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub overtime_secs: Option<u32>,
 }
 
 pub struct TimerService {
@@ -44,6 +46,7 @@ pub struct TimerService {
     duration_secs: u32,
     completion_flag: bool,
     pub(crate) started_instant: Option<Instant>,
+    pub(crate) completed_at: Option<Instant>,
     pub(crate) paused_work_secs: Option<u32>,
     pub(crate) paused_break_secs: Option<u32>,
     state_label: String,
@@ -58,6 +61,7 @@ impl TimerService {
             duration_secs: WORK_DURATION_SECS,
             completion_flag: false,
             started_instant: None,
+            completed_at: None,
             paused_work_secs: None,
             paused_break_secs: None,
             state_label: "Ready to work".to_string(),
@@ -75,6 +79,7 @@ impl TimerService {
             started_at: None,
             paused_at: None,
             state_label: self.state_label.clone(),
+            overtime_secs: None,
         }
     }
 

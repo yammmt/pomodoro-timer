@@ -7,6 +7,7 @@ interface TimerState {
   durationSecs: number;
   completionFlag: boolean;
   stateLabel: string;
+  overtimeSecs?: number;
 }
 
 const CHIME_DURATION_SEC = 3.0;

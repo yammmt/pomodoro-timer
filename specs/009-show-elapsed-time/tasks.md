@@ -30,11 +30,11 @@
 
 **⚠️ CRITICAL**: Complete this phase before implementing any user story
 
-- [ ] T004 Add `completed_at: Option<Instant>` field to `TimerService` in `src-tauri/src/timer.rs`
-- [ ] T005 Add `overtime_secs: Option<u32>` field to `TimerState` struct in `src-tauri/src/timer.rs`
-- [ ] T006 Update `TimerService::new()` constructor to initialize `completed_at = None` in `src-tauri/src/timer.rs`
-- [ ] T007 Add `overtime_secs` field to `TimerState` TypeScript interface in `src/main.ts`
-- [ ] T008 Add CSS `.overtime { color: #dc2626; }` style rule in `src/index.html` or separate CSS file
+- [X] T004 Add `completed_at: Option<Instant>` field to `TimerService` in `src-tauri/src/timer.rs`
+- [X] T005 Add `overtime_secs: Option<u32>` field to `TimerState` struct in `src-tauri/src/timer.rs`
+- [X] T006 Update `TimerService::new()` constructor to initialize `completed_at = None` in `src-tauri/src/timer.rs`
+- [X] T007 Add `overtime_secs` field to `TimerState` TypeScript interface in `src/main.ts`
+- [X] T008 Add CSS `.overtime { color: #dc2626; }` style rule in `src/index.html` or separate CSS file
 
 **Checkpoint**: Foundation ready - user story implementation can begin
 
