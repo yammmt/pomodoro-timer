@@ -54,13 +54,13 @@ When a user's break session completes and they haven't started their next work s
 - **FR-003**: System MUST display elapsed time in red color to differentiate from normal timer display
 - **FR-004**: System MUST update elapsed time display every second to show accurate overtime
 - **FR-005**: System MUST reset elapsed time display to normal timer when user starts a new session
-- **FR-006**: System MUST handle extended overtime periods until 59:59
+- **FR-006**: System MUST cap overtime display at 59:59 (display freezes at "-59:59" for any elapsed time beyond 3599 seconds)
 - **FR-007**: System MUST maintain elapsed time accuracy even if app is minimized or in background
 
 ### Key Entities
 
 - **Timer State**: Extended to include "overtime" state when session completes without user action
-- **Display Format**: Time representation with sign prefix (negative for overtime) and color coding (red for overtime, default for normal)
+- **Display Format**: Time representation with sign prefix (negative for overtime) and color coding (red for overtime, default for normal). Always uses MM:SS format, capped at -59:59.
 - **Session Completion**: Timestamp marking when a work or break session reached zero, used as reference for calculating elapsed overtime
 
 ## Success Criteria *(mandatory)*
@@ -70,7 +70,7 @@ When a user's break session completes and they haven't started their next work s
 - **SC-001**: Users can immediately recognize when a session has ended by observing the red negative time display
 - **SC-002**: Elapsed time updates are visible within 1 second of the actual time passage
 - **SC-003**: 100% of overtime scenarios (work and break) display elapsed time correctly in red with minus prefix
-- **SC-004**: Timer accurately tracks and displays elapsed time for periods up to 24 hours without overflow or error
+- **SC-004**: Timer correctly caps overtime display at -59:59 and maintains this value for any elapsed time beyond 3599 seconds
 
 ## Assumptions & Constraints
 
@@ -78,7 +78,7 @@ When a user's break session completes and they haven't started their next work s
 
 - Red color is sufficient visual indicator for overtime state (no additional sounds or notifications required)
 - Users understand negative time with minus prefix as "time passed since completion"
-- Display format MM:SS for times under 1 hour and HH:MM:SS for times over 1 hour follows user expectations
+- Display format MM:SS with cap at -59:59 is sufficient for overtime tracking (extended periods beyond 1 hour will remain at -59:59)
 - Timer continues running in background when app is minimized or unfocused
 - System clock provides accurate time source for elapsed time calculations
 
