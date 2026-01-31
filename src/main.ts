@@ -88,7 +88,15 @@ async function updateUI() {
   try {
     const state = await invoke<TimerState>('get_state');
 
-    timerDisplay.textContent = formatTime(state.remainingSecs);
+    // Handle overtime display
+    if (state.overtimeSecs !== undefined) {
+      timerDisplay.textContent = `-${formatTime(state.overtimeSecs)}`;
+      timerDisplay.classList.add('overtime');
+    } else {
+      timerDisplay.textContent = formatTime(state.remainingSecs);
+      timerDisplay.classList.remove('overtime');
+    }
+
     stateLabel.textContent = state.stateLabel;
 
     // Sync active mode button with backend phase

@@ -191,7 +191,7 @@ fn test_completion_flag_resets_on_next_cycle() {
     service.phase = Phase::Work;
     service.status = Status::Running;
     service.remaining_secs = 0;
-    service.handle_completion();
+    service.handle_completion(Instant::now());
 
     assert!(service.get_state().completion_flag);
 
@@ -674,4 +674,158 @@ fn test_set_phase_paused_to_paused_preserves_both() {
     service.set_phase(Phase::Break);
     assert_eq!(service.remaining_secs, break_remaining);
     assert_eq!(service.phase, Phase::Break);
+}
+
+// ========== Overtime Display Tests (Feature 009) ==========
+
+#[test]
+fn test_overtime_displayed_after_work_completion() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and wait 10 seconds
+    complete_work_session(&mut service);
+
+    // Set completed_at to exactly 10 seconds ago
+    let now = Instant::now();
+    service.completed_at = Some(now - Duration::from_secs(10));
+
+    let state = service.get_state();
+    assert_eq!(state.status, Status::Complete);
+    assert_eq!(state.overtime_secs, Some(10));
+}
+
+#[test]
+fn test_overtime_caps_at_59_59() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session and wait 2 hours (7200 seconds)
+    complete_work_session(&mut service);
+    sleep(Duration::from_millis(100));
+
+    // Fast-forward the completed_at timestamp by 7200 seconds
+    if let Some(completed) = service.completed_at {
+        service.completed_at = Some(completed - Duration::from_secs(7200));
+    }
+
+    let state = service.get_state();
+    assert_eq!(state.status, Status::Complete);
+    assert_eq!(state.overtime_secs, Some(3599)); // Capped at 59:59
+}
+
+#[test]
+fn test_overtime_cleared_on_start() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session with overtime
+    complete_work_session(&mut service);
+
+    // Set completed_at to exactly 30 seconds ago
+    let now = Instant::now();
+    service.completed_at = Some(now - Duration::from_secs(30));
+
+    // Verify overtime exists
+    assert_eq!(service.get_state().overtime_secs, Some(30));
+
+    // Start new timer
+    service.start().unwrap();
+
+    let state = service.get_state();
+    assert_eq!(state.status, Status::Running);
+    assert_eq!(state.overtime_secs, None);
+    assert!(service.completed_at.is_none());
+}
+
+#[test]
+fn test_overtime_cleared_on_clear() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session with overtime
+    complete_work_session(&mut service);
+
+    // Set completed_at to exactly 45 seconds ago
+    let now = Instant::now();
+    service.completed_at = Some(now - Duration::from_secs(45));
+
+    // Verify overtime exists
+    assert_eq!(service.get_state().overtime_secs, Some(45));
+
+    // Clear timer
+    service.clear().unwrap();
+
+    let state = service.get_state();
+    assert_eq!(state.status, Status::WorkReady);
+    assert_eq!(state.overtime_secs, None);
+    assert!(service.completed_at.is_none());
+}
+
+#[test]
+fn test_overtime_cleared_on_phase_change() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session with overtime
+    complete_work_session(&mut service);
+
+    // Set completed_at to exactly 20 seconds ago
+    let now = Instant::now();
+    service.completed_at = Some(now - Duration::from_secs(20));
+
+    // Verify overtime exists
+    assert_eq!(service.get_state().overtime_secs, Some(20));
+
+    // Switch to break phase
+    service.set_phase(Phase::Break);
+
+    let state = service.get_state();
+    assert_eq!(state.phase, Phase::Break);
+    assert_eq!(state.overtime_secs, None);
+    assert!(service.completed_at.is_none());
+}
+
+#[test]
+fn test_overtime_displayed_after_break_completion() {
+    let mut service = TimerService::new();
+    service.set_phase(Phase::Break);
+    service.start().unwrap();
+
+    // Complete break session and wait 5 seconds
+    complete_break_session(&mut service);
+
+    // Set completed_at to exactly 5 seconds ago
+    let now = Instant::now();
+    service.completed_at = Some(now - Duration::from_secs(5));
+
+    let state = service.get_state();
+    assert_eq!(state.status, Status::Complete);
+    assert_eq!(state.overtime_secs, Some(5));
+}
+
+#[test]
+fn test_overtime_break_cleared_on_start() {
+    let mut service = TimerService::new();
+    service.set_phase(Phase::Break);
+    service.start().unwrap();
+
+    // Complete break session with overtime
+    complete_break_session(&mut service);
+
+    // Set completed_at to exactly 15 seconds ago
+    let now = Instant::now();
+    service.completed_at = Some(now - Duration::from_secs(15));
+
+    // Verify overtime exists
+    assert_eq!(service.get_state().overtime_secs, Some(15));
+
+    // Start new timer (restarts break)
+    service.start().unwrap();
+
+    let state = service.get_state();
+    assert_eq!(state.phase, Phase::Break);
+    assert_eq!(state.status, Status::Running);
+    assert_eq!(state.overtime_secs, None);
+    assert!(service.completed_at.is_none());
 }

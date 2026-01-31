@@ -106,7 +106,7 @@ BreakReady ↔ Running → Paused → Running → Complete
 ### Overtime Sub-State (New)
 
 ```text
-Complete (remaining = 0, completed_at = now)
+Complete (remaining = 0, completed_at = started_instant + duration)
     ↓
 Overtime Mode (remaining = 0, overtime_secs calculated)
     ↓ (on start/resume)
@@ -130,7 +130,7 @@ Timer reaches 0:00
     ↓
 handle_completion() called
     ↓
-Set: status = Complete, remaining_secs = 0, completed_at = now
+Set: status = Complete, remaining_secs = 0, completed_at = started_instant + duration
     ↓
 Frontend polls get_state()
     ↓

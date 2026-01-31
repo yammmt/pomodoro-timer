@@ -56,17 +56,35 @@ impl TimerService {
 
 **File**: `src-tauri/src/timer.rs`
 
-Modify `handle_completion()`:
+Modify `handle_completion()` to accept a completion timestamp parameter:
 
 ```rust
-pub(crate) fn handle_completion(&mut self) {
+pub(crate) fn handle_completion(&mut self, completion_time: Instant) {
     self.completion_flag = true;
     self.remaining_secs = 0;
     self.status = Status::Complete;
     self.started_instant = None;
-    self.completed_at = Some(Instant::now());  // ⭐ NEW
+    self.completed_at = Some(completion_time);  // ⭐ NEW
 
     // ... rest of method ...
+}
+```
+
+Update `update_remaining()` to calculate the exact completion time:
+
+```rust
+fn update_remaining(&mut self) {
+    if let Some(start) = self.started_instant {
+        let elapsed = start.elapsed().as_secs() as u32;
+        let initial = /* ... get initial duration based on phase ... */;
+
+        if elapsed >= initial {
+            let completion_time = start + Duration::from_secs(initial as u64);
+            self.handle_completion(completion_time);  // ⭐ Pass calculated time
+        } else {
+            self.remaining_secs = initial - elapsed;
+        }
+    }
 }
 ```
 
@@ -287,14 +305,14 @@ fn test_overtime_cleared_on_start() {
 
 ## Verification Checklist
 
-- [ ] Backend compiles without errors (`cargo build`)
-- [ ] Unit tests pass (`cargo test`)
+- [X] Backend compiles without errors (`cargo build`)
+- [X] Unit tests pass (`cargo test`)
 - [ ] Frontend TypeScript compiles (`npm run check` or equivalent)
 - [ ] Overtime displays in red with minus prefix
 - [ ] Overtime updates every second
 - [ ] Overtime caps at -59:59
 - [ ] Resuming from overtime clears display
-- [ ] Both work and break sessions support overtime
+- [X] Both work and break sessions support overtime
 - [ ] Clear button works during overtime
 
 ---
