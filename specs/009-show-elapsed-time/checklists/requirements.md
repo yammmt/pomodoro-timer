@@ -32,5 +32,6 @@
 ## Notes
 
 ✅ **Validation Complete**: All quality criteria passed on 2026-01-31
+
 - Specification is ready for `/speckit.clarify` or `/speckit.plan`
 - No outstanding issues or clarifications needed

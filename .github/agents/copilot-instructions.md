@@ -25,9 +25,9 @@ cargo test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECH
 Rust 1.92: Follow standard conventions
 
 ## Recent Changes
+- 009-show-elapsed-time: Added Rust 1.92 + tauri 2.9
 - 008-stay-on-complete: Added Rust 1.92 + tauri 2.9
 - 007-dependabot-setup: Added N/A (GitHub service configuration) + GitHub Dependabot service
-- 006-work-break-toggle: Added Rust 1.92 + tauri 2.9
 
 
 <!-- MANUAL ADDITIONS START -->
