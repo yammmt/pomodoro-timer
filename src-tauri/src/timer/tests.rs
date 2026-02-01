@@ -829,3 +829,43 @@ fn test_overtime_break_cleared_on_start() {
     assert_eq!(state.overtime_secs, None);
     assert!(service.completed_at.is_none());
 }
+
+#[test]
+fn test_overtime_cap_beyond_59_59() {
+    let mut service = TimerService::new();
+    service.start().unwrap();
+
+    // Complete work session
+    complete_work_session(&mut service);
+
+    // Set completed_at to 1 hour and 30 seconds ago (3630 seconds)
+    service.completed_at = Some(Instant::now() - Duration::from_secs(3630));
+
+    let state = service.get_state();
+    assert_eq!(
+        state.overtime_secs,
+        Some(3599),
+        "Overtime should cap at 3599 (59:59), got {:?}",
+        state.overtime_secs
+    );
+
+    // Set completed_at to exactly 1 hour ago (3600 seconds)
+    service.completed_at = Some(Instant::now() - Duration::from_secs(3600));
+
+    let state2 = service.get_state();
+    assert_eq!(
+        state2.overtime_secs,
+        Some(3599),
+        "Overtime at exactly 60:00 should cap at 3599"
+    );
+
+    // Set completed_at to 2 hours ago (7200 seconds)
+    service.completed_at = Some(Instant::now() - Duration::from_secs(7200));
+
+    let state3 = service.get_state();
+    assert_eq!(
+        state3.overtime_secs,
+        Some(3599),
+        "Overtime beyond 1 hour should remain capped at 3599"
+    );
+}

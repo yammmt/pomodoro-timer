@@ -111,8 +111,8 @@
 - [X] T039 Run `cargo fmt` to format Rust code in `src-tauri/`
 - [X] T040 Run `cargo clippy` for linting checks in `src-tauri/`
 - [X] T041 Run `cargo test` to verify all tests pass in `src-tauri/`
-- [ ] T042 [P] Manual test: Minimize app during overtime, restore, verify display shows correct elapsed time
-- [ ] T043 [P] Manual test: Let overtime run to `"-59:59"`, verify it stays capped (doesn't go to `"-60:00"`)
+- [X] T042 [P] Manual test: Minimize app during overtime, restore, verify display shows correct elapsed time
+- [X] T043 [P] Add unit test: `test_overtime_cap_beyond_59_59` in `src-tauri/src/timer/tests.rs` (verifies overtime caps at 59:59 for 1hr+)
 - [X] T044 Review `quickstart.md` verification checklist and confirm all items complete
 - [X] T045 Update `implementation-report.md` with completion status
 
