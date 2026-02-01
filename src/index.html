@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,23 +18,31 @@
             color: #ffffff;
             box-sizing: border-box;
         }
+
         .container {
             text-align: center;
             max-width: 400px;
             width: 100%;
             padding: 12px 0 16px;
         }
+
         #timer-display {
             font-size: 68px;
             font-weight: 300;
             margin: 16px 0;
             font-variant-numeric: tabular-nums;
         }
+
+        #timer-display.overtime {
+            color: #dc2626;
+        }
+
         #state-label {
             font-size: 24px;
             margin-bottom: 22px;
             color: #888;
         }
+
         .controls {
             display: flex;
             gap: 10px;
@@ -41,6 +50,7 @@
             flex-wrap: nowrap;
             margin: 0 0 12px;
         }
+
         .mode-selector {
             display: flex;
             gap: 10px;
@@ -48,6 +58,7 @@
             align-items: center;
             margin: 0 0 12px;
         }
+
         .mode-btn {
             padding: 10px 18px;
             font-size: 14px;
@@ -58,9 +69,11 @@
             cursor: pointer;
             transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
+
         .mode-btn:hover:not(:disabled) {
             background-color: #333333;
         }
+
         .mode-btn.active {
             background-color: #cce5ff;
             border: 2px solid #0066cc;
@@ -82,6 +95,7 @@
             justify-content: center;
             z-index: 1000;
         }
+
         .modal-dialog {
             background: #1f1f1f;
             color: #fff;
@@ -93,17 +107,20 @@
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
+
         .modal-dialog p {
             margin: 0;
             font-size: 16px;
             line-height: 1.4;
         }
+
         .modal-buttons {
             margin-top: 18px;
             display: flex;
             gap: 10px;
             justify-content: center;
         }
+
         button {
             padding: 12px 16px;
             font-size: 16px;
@@ -113,54 +130,68 @@
             font-weight: 500;
             transition: opacity 0.2s;
         }
+
         button:disabled {
             opacity: 0.3;
             cursor: not-allowed;
         }
+
         #start-btn {
             background: #10b981;
             color: white;
         }
+
         #start-btn:hover:not(:disabled) {
             background: #059669;
         }
+
         #pause-btn {
             background: #f59e0b;
             color: white;
         }
+
         #pause-btn:hover:not(:disabled) {
             background: #d97706;
         }
+
         #resume-btn {
             background: #3b82f6;
             color: white;
         }
+
         #resume-btn:hover:not(:disabled) {
             background: #2563eb;
         }
+
         #clear-btn {
             background: #ef4444;
             color: white;
         }
+
         #clear-btn:hover:not(:disabled) {
             background: #dc2626;
         }
+
         .btn-danger {
             background: #ef4444;
             color: white;
         }
+
         .btn-danger:hover:not(:disabled) {
             background: #dc2626;
         }
+
         .btn-secondary {
             background: #374151;
             color: white;
         }
+
         .btn-secondary:hover:not(:disabled) {
             background: #4b5563;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div id="mode-selector" class="mode-selector" aria-label="Select timer mode">
@@ -188,4 +219,5 @@
     </div>
     <script type="module" src="./main.ts"></script>
 </body>
+
 </html>
