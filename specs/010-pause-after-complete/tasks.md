@@ -7,14 +7,14 @@
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Review current timer pause/resume flow in src-tauri/src/timer.rs and UI bindings in src/main.ts
+- [X] T001 Review current timer pause/resume flow in src-tauri/src/timer.rs and UI bindings in src/main.ts
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T002 Update `TimerState` to add `overtimePaused` status and `overtimePausedSecs` in src-tauri/src/timer.rs
-- [ ] T003 [P] Update `TimerState` type to include `overtimePaused` and `overtimePausedSecs` in src/main.ts
+- [X] T002 Update `TimerState` to add `overtimePaused` status and `overtimePausedSecs` in src-tauri/src/timer.rs
+- [X] T003 [P] Update `TimerState` type to include `overtimePaused` and `overtimePausedSecs` in src/main.ts
 
 **Checkpoint**: Shared state model updated across backend and UI.
 
@@ -28,9 +28,9 @@
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Implement pause/resume transitions for completed overtime in src-tauri/src/timer.rs
-- [ ] T005 [US1] Update overtime calculation and state label for `overtimePaused` in src-tauri/src/timer.rs
-- [ ] T006 [P] [US1] Render frozen overtime using `overtimePausedSecs` in src/main.ts
+- [X] T004 [US1] Implement pause/resume transitions for completed overtime in src-tauri/src/timer.rs
+- [X] T005 [US1] Update overtime calculation and state label for `overtimePaused` in src-tauri/src/timer.rs
+- [X] T006 [P] [US1] Render frozen overtime using `overtimePausedSecs` in src/main.ts
 
 **Checkpoint**: Overdue time can be paused and resumed after completion.
 
@@ -44,7 +44,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T007 [US2] Enable Pause when status is `complete` and Resume when status is `overtimePaused` in src/main.ts
+- [X] T007 [US2] Enable Pause when status is `complete` and Resume when status is `overtimePaused` in src/main.ts
 
 **Checkpoint**: Controls remain available after completion across both phases.
 
@@ -52,7 +52,7 @@
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T008 [P] Validate quickstart steps in specs/010-pause-after-complete/quickstart.md
+- [X] T008 [P] Validate quickstart steps in specs/010-pause-after-complete/quickstart.md
 
 ---
 
