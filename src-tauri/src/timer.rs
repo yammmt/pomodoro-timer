@@ -20,6 +20,7 @@ pub enum Status {
     Running,
     Paused,
     Complete,
+    OvertimePaused,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,6 +38,8 @@ pub struct TimerState {
     pub state_label: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub overtime_secs: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub overtime_paused_secs: Option<u32>,
 }
 
 pub struct TimerService {
@@ -47,6 +50,7 @@ pub struct TimerService {
     completion_flag: bool,
     pub(crate) started_instant: Option<Instant>,
     pub(crate) completed_at: Option<Instant>,
+    pub(crate) overtime_paused_secs: Option<u32>,
     pub(crate) paused_work_secs: Option<u32>,
     pub(crate) paused_break_secs: Option<u32>,
     state_label: String,
@@ -62,6 +66,7 @@ impl TimerService {
             completion_flag: false,
             started_instant: None,
             completed_at: None,
+            overtime_paused_secs: None,
             paused_work_secs: None,
             paused_break_secs: None,
             state_label: "Ready to work".to_string(),
@@ -72,11 +77,17 @@ impl TimerService {
         self.update_remaining();
 
         // Calculate overtime if applicable
-        let overtime_secs = if self.status == Status::Complete {
-            self.completed_at.map(|completed| {
+        let overtime_secs = match self.status {
+            Status::Complete => self.completed_at.map(|completed| {
                 let elapsed = completed.elapsed().as_secs() as u32;
                 std::cmp::min(elapsed, 3599) // Cap at 59:59
-            })
+            }),
+            Status::OvertimePaused => self.overtime_paused_secs,
+            _ => None,
+        };
+
+        let overtime_paused_secs = if self.status == Status::OvertimePaused {
+            self.overtime_paused_secs
         } else {
             None
         };
@@ -91,6 +102,7 @@ impl TimerService {
             paused_at: None,
             state_label: self.state_label.clone(),
             overtime_secs,
+            overtime_paused_secs,
         }
     }
 
@@ -121,6 +133,7 @@ impl TimerService {
         self.status = Status::Complete;
         self.started_instant = None;
         self.completed_at = Some(completion_time);
+        self.overtime_paused_secs = None;
 
         // Stay in current phase, update label
         self.state_label = match self.phase {
@@ -151,7 +164,7 @@ impl TimerService {
                 self.paused_work_secs = None;
                 // Preserve paused_break_secs for switching back to break later
             }
-            Status::Complete => {
+            Status::Complete | Status::OvertimePaused => {
                 // Restart the current phase (stay in work or break)
                 match self.phase {
                     Phase::Work => {
@@ -162,6 +175,7 @@ impl TimerService {
                         self.state_label = "Working".to_string();
                         self.started_instant = Some(Instant::now());
                         self.completed_at = None;
+                        self.overtime_paused_secs = None;
                         self.paused_work_secs = None;
                     }
                     Phase::Break => {
@@ -172,6 +186,7 @@ impl TimerService {
                         self.state_label = "Break time".to_string();
                         self.started_instant = Some(Instant::now());
                         self.completed_at = None;
+                        self.overtime_paused_secs = None;
                         self.paused_break_secs = None;
                     }
                 }
@@ -200,42 +215,77 @@ impl TimerService {
     }
 
     pub fn pause(&mut self) -> Result<TimerState, String> {
-        if self.status != Status::Running {
-            return Err("No running timer to pause".to_string());
-        }
-
-        self.update_remaining();
-        self.status = Status::Paused;
-        match self.phase {
-            Phase::Work => self.paused_work_secs = Some(self.remaining_secs),
-            Phase::Break => self.paused_break_secs = Some(self.remaining_secs),
-        }
-        self.started_instant = None;
-        self.state_label = format!(
-            "Paused ({})",
-            if self.phase == Phase::Work {
-                "work"
-            } else {
-                "break"
+        match self.status {
+            Status::Running => {
+                self.update_remaining();
+                self.status = Status::Paused;
+                match self.phase {
+                    Phase::Work => self.paused_work_secs = Some(self.remaining_secs),
+                    Phase::Break => self.paused_break_secs = Some(self.remaining_secs),
+                }
+                self.started_instant = None;
+                self.state_label = format!(
+                    "Paused ({})",
+                    if self.phase == Phase::Work {
+                        "work"
+                    } else {
+                        "break"
+                    }
+                );
             }
-        );
+            Status::Complete => {
+                let completed_at = self
+                    .completed_at
+                    .ok_or_else(|| "No completion time available".to_string())?;
+                let elapsed = completed_at.elapsed().as_secs() as u32;
+                self.overtime_paused_secs = Some(std::cmp::min(elapsed, 3599));
+                self.status = Status::OvertimePaused;
+                self.state_label = format!(
+                    "Overtime paused ({})",
+                    if self.phase == Phase::Work {
+                        "work"
+                    } else {
+                        "break"
+                    }
+                );
+            }
+            _ => {
+                return Err("No running timer to pause".to_string());
+            }
+        }
 
         Ok(self.get_state())
     }
 
     pub fn resume(&mut self) -> Result<TimerState, String> {
-        if self.status != Status::Paused {
-            return Err("No paused timer to resume".to_string());
+        match self.status {
+            Status::Paused => {
+                self.status = Status::Running;
+                self.started_instant = Some(Instant::now());
+                self.completed_at = None;
+                self.state_label = if self.phase == Phase::Work {
+                    "Working".to_string()
+                } else {
+                    "Break time".to_string()
+                };
+            }
+            Status::OvertimePaused => {
+                let paused_secs = self.overtime_paused_secs.unwrap_or(0);
+                let completed_at = Instant::now()
+                    .checked_sub(std::time::Duration::from_secs(paused_secs as u64))
+                    .unwrap_or_else(Instant::now);
+                self.completed_at = Some(completed_at);
+                self.overtime_paused_secs = None;
+                self.status = Status::Complete;
+                self.state_label = match self.phase {
+                    Phase::Work => "Work completed".to_string(),
+                    Phase::Break => "Break completed".to_string(),
+                };
+            }
+            _ => {
+                return Err("No paused timer to resume".to_string());
+            }
         }
-
-        self.status = Status::Running;
-        self.started_instant = Some(Instant::now());
-        self.completed_at = None;
-        self.state_label = if self.phase == Phase::Work {
-            "Working".to_string()
-        } else {
-            "Break time".to_string()
-        };
 
         Ok(self.get_state())
     }
@@ -260,6 +310,7 @@ impl TimerService {
         self.completion_flag = false;
         self.started_instant = None;
         self.completed_at = None;
+        self.overtime_paused_secs = None;
         self.paused_work_secs = None;
         self.paused_break_secs = None;
 
@@ -290,7 +341,7 @@ impl TimerService {
                 Phase::Work => self.paused_work_secs = Some(self.remaining_secs),
                 Phase::Break => self.paused_break_secs = Some(self.remaining_secs),
             }
-        } else if self.status == Status::Complete {
+        } else if self.status == Status::Complete || self.status == Status::OvertimePaused {
             // Session completed; switching phase clears completion state
             // No need to save remaining time (already 0)
             // Completion flag will be cleared below
@@ -328,6 +379,7 @@ impl TimerService {
         }
 
         self.completion_flag = false;
+        self.overtime_paused_secs = None;
     }
 }
 

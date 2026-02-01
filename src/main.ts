@@ -2,12 +2,13 @@ import { invoke } from '@tauri-apps/api/core';
 
 interface TimerState {
   phase: 'work' | 'break';
-  status: 'workReady' | 'breakReady' | 'running' | 'paused' | 'complete';
+  status: 'workReady' | 'breakReady' | 'running' | 'paused' | 'complete' | 'overtimePaused';
   remainingSecs: number;
   durationSecs: number;
   completionFlag: boolean;
   stateLabel: string;
   overtimeSecs?: number;
+  overtimePausedSecs?: number;
 }
 
 const CHIME_DURATION_SEC = 3.0;
@@ -89,7 +90,10 @@ async function updateUI() {
     const state = await invoke<TimerState>('get_state');
 
     // Handle overtime display
-    if (state.overtimeSecs !== undefined) {
+    if (state.overtimePausedSecs !== undefined) {
+      timerDisplay.textContent = `-${formatTime(state.overtimePausedSecs)}`;
+      timerDisplay.classList.add('overtime');
+    } else if (state.overtimeSecs !== undefined) {
       timerDisplay.textContent = `-${formatTime(state.overtimeSecs)}`;
       timerDisplay.classList.add('overtime');
     } else {
@@ -110,8 +114,8 @@ async function updateUI() {
 
     // Update button states - Start enabled when in Ready states
     startBtn.disabled = !(state.status === 'workReady' || state.status === 'breakReady');
-    pauseBtn.disabled = state.status !== 'running';
-    resumeBtn.disabled = state.status !== 'paused';
+    pauseBtn.disabled = !(state.status === 'running' || state.status === 'complete');
+    resumeBtn.disabled = !(state.status === 'paused' || state.status === 'overtimePaused');
     // Clear enabled unless in fresh Ready state (remaining time = full duration)
     const isFreshState = ((state.status === 'workReady' || state.status === 'breakReady')
       && state.remainingSecs === state.durationSecs);

@@ -3,9 +3,11 @@
 Auto-generated from all feature plans. Last updated: 2026-01-02
 
 ## Active Technologies
+
 - HTML5/CSS3 + TypeScript + None (HTML/CSS only, TypeScript runtime already in place) (003-align-buttons)
 - N/A (GitHub service configuration) + GitHub Dependabot service (007-dependabot-setup)
 - N/A (GitHub manages Dependabot state) (007-dependabot-setup)
+- In-memory timer state (010-pause-after-complete)
 
 - Rust 1.92 + auri 2.9, cargo (build tool) (002-github-actions-ci)
 
@@ -25,9 +27,10 @@ cargo test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECH
 Rust 1.92: Follow standard conventions
 
 ## Recent Changes
+
+- 010-pause-after-complete: Added Rust 1.92 + tauri 2.9
 - 009-show-elapsed-time: Added Rust 1.92 + tauri 2.9
 - 008-stay-on-complete: Added Rust 1.92 + tauri 2.9
-- 007-dependabot-setup: Added N/A (GitHub service configuration) + GitHub Dependabot service
 
 
 <!-- MANUAL ADDITIONS START -->
